@@ -1,4 +1,50 @@
+# CRITICAL: Environment variables file
 .env
+.env.local
+.env.*.local
+
+# Python specific files
 __pycache__/
-*.pyc
-.streamlit/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Node.js specific files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# IDEs and Editors (auto-generated files)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Streamlit (for your Week 1 & 2 projects)
+.streamlit/secrets.toml
+
+# Data files (if containing sensitive info)
+data/
+*.csv
+*.xlsx
+
+# Log files
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
