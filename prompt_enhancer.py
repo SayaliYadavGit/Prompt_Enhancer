@@ -1,10 +1,17 @@
-import os
+"""
 from dotenv import load_dotenv
+import os
+from openai import OpenAI
 
-load_dotenv()  # This reads your .env file
-api_key = os.getenv("OPENAI_API_KEY")  # This gets the key
-print(f"Key loaded: {api_key[:10]}...")  # Shows first 10 characters only
+# Load environment variables from .env file
+load_dotenv()
 
+# Get the API key from environment
+api_key = os.getenv("OPENAI_API_KEY")
+
+# Create OpenAI client with your key
+client = OpenAI(api_key=api_key)
+"""
 import streamlit as st
 st.set_page_config(page_title="Prompt Enhancer", page_icon="📝")
 st.title("📝 Prompt Engineer — General Prompt Enhancer")
