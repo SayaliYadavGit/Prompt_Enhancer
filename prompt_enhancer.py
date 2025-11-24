@@ -1,4 +1,3 @@
-"""
 from dotenv import load_dotenv
 import os
 from openai import OpenAI
@@ -11,7 +10,7 @@ api_key = os.getenv("OPENAI_API_KEY")
 
 # Create OpenAI client with your key
 client = OpenAI(api_key=api_key)
-"""
+
 import streamlit as st
 st.set_page_config(page_title="Prompt Enhancer", page_icon="📝")
 st.title("📝 Prompt Engineer — General Prompt Enhancer")
