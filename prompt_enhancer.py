@@ -12,12 +12,19 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 import streamlit as st
+
 st.set_page_config(page_title="Prompt Enhancer", page_icon="📝")
 st.title("📝 Prompt Engineer — General Prompt Enhancer")
 
-st.caption("Demo Mode - Learn how to structure better prompts!")
+# Add mode toggle at the top
+mode = st.radio("Select Mode:", ["Demo Mode (Free)", "Live Mode (Uses API)"], horizontal=True)
 
-st.subheader("Enter CC-SC-R")
+if mode == "Demo Mode (Free)":
+    st.caption("Demo Mode - Learn how to structure better prompts!")
+else:
+    st.caption("🟢 Live Mode - Using real OpenAI API")
+
+st.subheader("Enter CC-SC-R Framework")
 Context = st.text_input("Context requirements", value="Domain audience goal...")
 Constraints = st.text_area("Constraints specifications", value="Policies, Compliance and regulatory limits...")
 Structure = st.text_area("Structure Mandates", value="Required sections fields and formatting...")
@@ -29,33 +36,100 @@ draft = st.text_area("Your draft prompt:", height=140)
 
 if st.button("Enhance Prompt"):
     if not draft.strip():
-
-
         st.warning("Please enter a draft prompt.")
-
     else:
-        # Demo output - shows structured approach
-        instruction = (
-            "Generate an enhanced, structured prompt using CC-SCR-R.\n"
-            "1) Improve clarity and completeness\n"
-            "2) Ask ONE clarifying question\n"
-            "3) Specify output format (3 bullets, ≤12 words each)\n"
-        )
-        demo_output = (
-            f"Context: {Context}\n"
-            f"Constraints: {Constraints}\n"
-            f"Structure: {Structure}\n"
-            f"Checkpoints: {Checkpoint}\n"
-            f"Review: {Review}\n\n"
+        # ==================================================
+        # DEMO MODE - Shows structure without API call
+        # ==================================================
+        if mode == "Demo Mode (Free)":
+            instruction = (
+                "Generate an enhanced, structured prompt using CC-SCR-R.\n"
+                "1) Improve clarity and completeness\n"
+                "2) Ask ONE clarifying question\n"
+                "3) Specify output format (3 bullets, ≤12 words each)\n"
+            )
+            demo_output = (
+                f"Context: {Context}\n"
+                f"Constraints: {Constraints}\n"
+                f"Structure: {Structure}\n"
+                f"Checkpoints: {Checkpoint}\n"
+                f"Review: {Review}\n\n"
+                f"USER DRAFT:\n{draft}\n\n"
+                "OUTPUT FORMAT:\n- 3 concise bullets\n- 1 clarifying question"
+            )
             
-            f"USER DRAFT:\n{draft}\n\n"
-            "OUTPUT FORMAT:\n- 3 concise bullets\n- 1 clarifying question"
-        )
+            st.success("Enhanced Prompt (Demo Mode)")
+            st.code(instruction + "\n" + demo_output, language="markdown")
+            st.info("💡 This is demo mode showing the CC-SC-R structure. Switch to Live Mode to get AI-enhanced prompts!")
         
-        st.success("Enhanced Prompt (Demo Mode)")
-        st.code(instruction + "\n" + demo_output, language="markdown")
-        
-        st.info("💡 This is demo mode showing the CC-SC-R structure. In live mode, AI would generate the actual enhanced prompt!")
+        # ==================================================
+        # LIVE MODE - Real OpenAI API call
+        # ==================================================
+        else:
+            try:
+                with st.spinner("🤖 AI is enhancing your prompt..."):
+                    # Construct the system prompt (tells AI how to behave)
+                    system_prompt = """You are an expert prompt engineer specializing in the CC-SC-R framework 
+                    (Context, Constraints, Structure, Checkpoints, Review).
+                    
+                    Your task:
+                    1. Analyze the user's draft prompt and CC-SC-R inputs
+                    2. Enhance the prompt for clarity, completeness, and effectiveness
+                    3. Apply the CC-SC-R framework systematically
+                    4. Ask ONE clarifying question to improve the prompt further
+                    5. Format output as requested
+                    
+                    Be concise, professional, and actionable."""
+                    
+                    # Construct the user message (the actual request)
+                    user_message = f"""Please enhance this prompt using the CC-SC-R framework:
 
+**Context:** {Context}
+**Constraints:** {Constraints}
+**Structure:** {Structure}
+**Checkpoints:** {Checkpoint}
+**Review:** {Review}
 
+**User's Draft Prompt:**
+{draft}
 
+**Instructions:**
+1. Generate an enhanced, production-ready prompt incorporating all CC-SC-R elements
+2. Make it clear, actionable, and comprehensive
+3. Ask ONE specific clarifying question to further improve it
+4. Format the enhanced prompt in a structured way
+
+**Output Format:**
+- Enhanced Prompt (full text)
+- Clarifying Question (1 specific question)
+- Key Improvements (3 bullets, ≤12 words each)"""
+
+                    # Call OpenAI API
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",  # Fast and cost-effective model
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_message}
+                        ],
+                        temperature=0.7,  # Balance between creativity and consistency
+                        max_tokens=800    # Limit response length
+                    )
+                    
+                    # Extract the AI's response
+                    enhanced_prompt = response.choices[0].message.content
+                    
+                    # Display results
+                    st.success("✅ Prompt Enhanced by AI!")
+                    st.markdown("---")
+                    st.markdown(enhanced_prompt)
+                    
+                    # Show API usage info
+                    with st.expander("📊 API Usage Details"):
+                        st.write(f"**Model:** {response.model}")
+                        st.write(f"**Tokens Used:** {response.usage.total_tokens}")
+                        st.write(f"**Approximate Cost:** ${response.usage.total_tokens * 0.0000015:.6f}")
+                        st.caption("(GPT-4o-mini: $0.150 per 1M input tokens, $0.600 per 1M output tokens)")
+                
+            except Exception as e:
+                st.error(f"❌ Error calling OpenAI API: {str(e)}")
+                st.info("💡 Make sure your API key is valid and you have credits in your OpenAI account.")
