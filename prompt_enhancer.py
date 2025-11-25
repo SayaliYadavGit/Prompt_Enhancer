@@ -24,15 +24,15 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
     
-    /* Main header with Hantec branding */
+    /* Main header with RED & WHITE Hantec branding */
     .main-header {
-        background: linear-gradient(135deg, #0a1628 0%, #1a2f4d 100%);
+        background: linear-gradient(135deg, #c41e3a 0%, #e6243b 100%);
         padding: 30px 20px;
         border-radius: 12px;
         text-align: center;
         margin-bottom: 30px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        border-bottom: 3px solid #ff6b35;
+        box-shadow: 0 8px 24px rgba(196, 30, 58, 0.3);
+        border-bottom: 4px solid white;
     }
     
     .logo-container {
@@ -49,28 +49,34 @@ st.markdown("""
         font-weight: 700;
         margin: 0;
         letter-spacing: -1px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
     
     .logo-markets {
-        color: #ff6b35;
-        font-weight: 600;
+        color: white;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 5px 15px;
+        border-radius: 8px;
     }
     
     .tagline {
-        color: #b8c5d6;
+        color: #ffe6ea;
         font-size: 1.2em;
         margin-top: 8px;
-        font-weight: 400;
+        font-weight: 500;
     }
     
     .trust-badge {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.95);
         padding: 10px 20px;
         border-radius: 20px;
         display: inline-block;
         margin-top: 15px;
-        color: #fff;
+        color: #c41e3a;
         font-size: 0.9em;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     /* Chat messages */
@@ -83,20 +89,20 @@ st.markdown("""
     }
     
     .user-message {
-        background: linear-gradient(135deg, #e8f4f8 0%, #d4e9f2 100%);
-        border-left: 4px solid #0a1628;
+        background: linear-gradient(135deg, #ffe6ea 0%, #ffd4db 100%);
+        border-left: 4px solid #c41e3a;
         margin-left: 40px;
     }
     
     .assistant-message {
         background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border-left: 4px solid #ff6b35;
+        border-left: 4px solid #c41e3a;
         margin-right: 40px;
     }
     
     .message-role {
         font-weight: 600;
-        color: #0a1628;
+        color: #c41e3a;
         margin-bottom: 8px;
         display: flex;
         align-items: center;
@@ -120,9 +126,9 @@ st.markdown("""
         }
     }
     
-    /* Buttons - Hantec style */
+    /* Buttons - RED & WHITE Hantec style */
     .stButton>button {
-        background: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%);
+        background: linear-gradient(135deg, #c41e3a 0%, #e6243b 100%);
         color: white;
         border: none;
         border-radius: 8px;
@@ -130,12 +136,12 @@ st.markdown("""
         font-weight: 600;
         font-size: 1em;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
     }
     
     .stButton>button:hover {
-        background: linear-gradient(135deg, #ff8c5a 0%, #ff6b35 100%);
-        box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
+        background: linear-gradient(135deg, #e6243b 0%, #c41e3a 100%);
+        box-shadow: 0 6px 16px rgba(196, 30, 58, 0.4);
         transform: translateY(-2px);
     }
     
@@ -152,10 +158,10 @@ st.markdown("""
     
     /* Info boxes */
     .info-card {
-        background: linear-gradient(135deg, #fff5f2 0%, #ffe8df 100%);
+        background: linear-gradient(135deg, #fff5f6 0%, #ffe6ea 100%);
         padding: 15px;
         border-radius: 8px;
-        border-left: 4px solid #ff6b35;
+        border-left: 4px solid #c41e3a;
         margin: 10px 0;
     }
     
@@ -278,10 +284,10 @@ with st.sidebar:
     # Footer
     st.markdown("""
         <div style='text-align: center; font-size: 0.85em; color: #666;'>
-            <p><strong>Hantec Markets</strong></p>
+            <p><strong style='color: #c41e3a;'>Hantec Markets</strong></p>
             <p>Multi-regulated CFD broker</p>
             <p style='margin-top: 10px;'>
-                <a href='https://hmarkets.com' target='_blank' style='color: #ff6b35; text-decoration: none;'>
+                <a href='https://hmarkets.com' target='_blank' style='color: #c41e3a; text-decoration: none; font-weight: 600;'>
                     Visit hmarkets.com →
                 </a>
             </p>
@@ -457,7 +463,7 @@ st.markdown("---")
 st.markdown("""
     <div style='background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 30px;'>
         <div style='text-align: center;'>
-            <h4 style='color: #0a1628; margin-bottom: 15px;'>⚠️ Important Disclaimer</h4>
+            <h4 style='color: #c41e3a; margin-bottom: 15px;'>⚠️ Important Disclaimer</h4>
             <p style='color: #666; font-size: 0.95em; line-height: 1.6;'>
                 This AI mentor provides <strong>educational content only</strong> and does not constitute 
                 financial or investment advice. CFD and forex trading carries substantial risk of loss. 
@@ -470,15 +476,15 @@ st.markdown("""
             </p>
             <div style='margin-top: 20px;'>
                 <a href='https://hmarkets.com' target='_blank' 
-                   style='color: #ff6b35; text-decoration: none; font-weight: 600; margin: 0 15px;'>
+                   style='color: #c41e3a; text-decoration: none; font-weight: 600; margin: 0 15px;'>
                     🌐 Visit hmarkets.com
                 </a>
                 <a href='https://hmarkets.com/live-account-pre-registration/' target='_blank' 
-                   style='color: #ff6b35; text-decoration: none; font-weight: 600; margin: 0 15px;'>
+                   style='color: #c41e3a; text-decoration: none; font-weight: 600; margin: 0 15px;'>
                     📈 Open Trading Account
                 </a>
                 <a href='https://hmarkets.com/learn-to-trade/learning-hub/' target='_blank' 
-                   style='color: #ff6b35; text-decoration: none; font-weight: 600; margin: 0 15px;'>
+                   style='color: #c41e3a; text-decoration: none; font-weight: 600; margin: 0 15px;'>
                     📚 Education Centre
                 </a>
             </div>
