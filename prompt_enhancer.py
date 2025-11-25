@@ -4,269 +4,312 @@ from openai import OpenAI
 # ========================================
 # PAGE CONFIGURATION
 # ========================================
-st.set_page_config(page_title="Prompt Enhancer", page_icon="📝")
-st.title("📝 Prompt Engineer — General Prompt Enhancer")
-
-# ========================================
-# API KEY INPUT (Manual Entry)
-# ========================================
-st.sidebar.header("🔑 API Configuration")
-api_key = st.sidebar.text_input(
-    "Enter your OpenAI API Key:",
-    type="password",
-    help="Your API key starts with 'sk-proj-...' Get it from https://platform.openai.com/api-keys"
-)
-
-# Show status indicator
-if api_key:
-    if api_key.startswith('sk-'):
-        st.sidebar.success("✅ API Key entered")
-        # Create OpenAI client with the entered key
-        try:
-            client = OpenAI(api_key=api_key)
-            api_key_valid = True
-        except Exception as e:
-            st.sidebar.error("❌ Invalid API key format")
-            api_key_valid = False
-    else:
-        st.sidebar.warning("⚠️ API key should start with 'sk-'")
-        api_key_valid = False
-else:
-    st.sidebar.info("ℹ️ Enter API key to use Live Mode")
-    api_key_valid = False
-
-# ========================================
-# MODE SELECTION
-# ========================================
-if api_key_valid:
-    mode = st.radio(
-        "Select Mode:", 
-        ["Demo Mode (Free)", "Live Mode (Uses API)"], 
-        horizontal=True
-    )
-else:
-    mode = "Demo Mode (Free)"
-    st.info("💡 Enter your API key in the sidebar to enable Live Mode")
-
-if mode == "Demo Mode (Free)":
-    st.caption("Demo Mode - Learn how to structure better prompts!")
-else:
-    st.caption("🟢 Live Mode - Using real OpenAI API")
-
-# ========================================
-# CC-SC-R FRAMEWORK INPUTS
-# ========================================
-st.subheader("Enter CC-SC-R Framework")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    Context = st.text_area(
-        "Context requirements", 
-        value="Domain audience goal...",
-        height=80,
-        help="Who is this for? What's the domain? What's the goal?"
-    )
-    
-    Constraints = st.text_area(
-        "Constraints specifications", 
-        value="Policies, Compliance and regulatory limits...",
-        height=80,
-        help="What limitations exist? Policies, regulations, budget?"
-    )
-    
-    Structure = st.text_area(
-        "Structure Mandates", 
-        value="Required sections fields and formatting...",
-        height=80,
-        help="Required format, sections, or structure?"
-    )
-
-with col2:
-    Checkpoint = st.text_area(
-        "Checkpoint Integration", 
-        value="Assumptions, Risks, Confidence levels...",
-        height=80,
-        help="What assumptions to validate? What risks to flag?"
-    )
-    
-    Review = st.text_area(
-        "Review Protocols", 
-        value="Approval points and escalation triggers...",
-        height=80,
-        help="Who reviews? When to escalate?"
-    )
-
-# ========================================
-# DRAFT PROMPT INPUT
-# ========================================
-st.subheader("Paste your rough prompt")
-draft = st.text_area(
-    "Your draft prompt:", 
-    height=140,
-    placeholder="Example: Write a blog post about AI...",
-    help="Enter your initial prompt that needs enhancement"
+st.set_page_config(
+    page_title="Hantec Markets Trading Mentor",
+    page_icon="📈",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # ========================================
-# ENHANCE BUTTON & LOGIC
+# CUSTOM CSS FOR BRANDING
 # ========================================
-if st.button("🚀 Enhance Prompt", type="primary", use_container_width=True):
-    if not draft.strip():
-        st.warning("⚠️ Please enter a draft prompt.")
+st.markdown("""
+    <style>
+    .main-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .logo-text {
+        color: white;
+        font-size: 2.5em;
+        font-weight: bold;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .tagline {
+        color: #e0e0e0;
+        font-size: 1.1em;
+        margin-top: 5px;
+    }
+    .chat-message {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        animation: fadeIn 0.5s;
+    }
+    .user-message {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+    }
+    .assistant-message {
+        background-color: #f5f5f5;
+        border-left: 4px solid #1e3c72;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .stButton>button {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 30px;
+        font-weight: bold;
+    }
+    .stButton>button:hover {
+        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ========================================
+# HEADER WITH LOGO
+# ========================================
+st.markdown("""
+    <div class="main-header">
+        <h1 class="logo-text">📈 HANTEC MARKETS</h1>
+        <p class="tagline">Your AI Trading Mentor - Learn, Trade, Succeed</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# ========================================
+# SESSION STATE INITIALIZATION
+# ========================================
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "api_key_set" not in st.session_state:
+    st.session_state.api_key_set = False
+
+# ========================================
+# SIDEBAR - API KEY & INFO
+# ========================================
+with st.sidebar:
+    st.header("🔑 API Configuration")
     
-    else:
-        # ==================================================
-        # DEMO MODE - Shows structure without API call
-        # ==================================================
-        if mode == "Demo Mode (Free)":
-            instruction = (
-                "Generate an enhanced, structured prompt using CC-SC-R.\n"
-                "1) Improve clarity and completeness\n"
-                "2) Ask ONE clarifying question\n"
-                "3) Specify output format (3 bullets, ≤12 words each)\n"
-            )
-            demo_output = (
-                f"**Context:** {Context}\n\n"
-                f"**Constraints:** {Constraints}\n\n"
-                f"**Structure:** {Structure}\n\n"
-                f"**Checkpoints:** {Checkpoint}\n\n"
-                f"**Review:** {Review}\n\n"
-                f"**USER DRAFT:**\n{draft}\n\n"
-                "**OUTPUT FORMAT:**\n- 3 concise bullets\n- 1 clarifying question"
-            )
-            
-            st.success("✅ Enhanced Prompt Structure (Demo Mode)")
-            st.markdown("---")
-            st.markdown("### Framework Applied:")
-            st.code(instruction, language="markdown")
-            st.markdown("### Your Structured Prompt:")
-            st.markdown(demo_output)
-            st.info("💡 This is demo mode showing the CC-SC-R structure. Switch to Live Mode to get AI-enhanced prompts!")
-        
-        # ==================================================
-        # LIVE MODE - Real OpenAI API call
-        # ==================================================
+    api_key = st.text_input(
+        "OpenAI API Key:",
+        type="password",
+        help="Enter your OpenAI API key to activate the mentor",
+        placeholder="sk-proj-..."
+    )
+    
+    # Validate API key
+    if api_key:
+        if api_key.startswith('sk-'):
+            st.success("✅ API Key Active")
+            st.session_state.api_key_set = True
+            try:
+                client = OpenAI(api_key=api_key)
+            except Exception as e:
+                st.error("❌ Invalid API Key")
+                st.session_state.api_key_set = False
         else:
-            if not api_key_valid:
-                st.error("❌ Please enter a valid API key in the sidebar to use Live Mode")
-            else:
-                try:
-                    with st.spinner("🤖 AI is enhancing your prompt..."):
-                        # Construct the system prompt
-                        system_prompt = """You are an expert prompt engineer specializing in the CC-SC-R framework 
-                        (Context, Constraints, Structure, Checkpoints, Review).
-                        
-                        Your task:
-                        1. Analyze the user's draft prompt and CC-SC-R inputs
-                        2. Enhance the prompt for clarity, completeness, and effectiveness
-                        3. Apply the CC-SC-R framework systematically
-                        4. Ask ONE clarifying question to improve the prompt further
-                        5. Format output clearly
-                        
-                        Be concise, professional, and actionable."""
-                        
-                        # Construct the user message
-                        user_message = f"""Please enhance this prompt using the CC-SC-R framework:
+            st.warning("⚠️ Key should start with 'sk-'")
+            st.session_state.api_key_set = False
+    else:
+        st.info("ℹ️ Enter your API key to begin")
+        st.session_state.api_key_set = False
+    
+    st.markdown("---")
+    
+    # Trading Topics
+    st.header("📚 Trading Topics")
+    st.markdown("""
+    **What you can ask:**
+    - Forex trading basics
+    - Risk management strategies
+    - Technical analysis
+    - Chart patterns
+    - Trading psychology
+    - Market fundamentals
+    - Order types & execution
+    - Portfolio management
+    """)
+    
+    st.markdown("---")
+    
+    # Quick Actions
+    st.header("⚡ Quick Actions")
+    if st.button("🔄 Clear Chat History"):
+        st.session_state.messages = []
+        st.rerun()
+    
+    if st.button("💡 Example Questions"):
+        st.session_state.show_examples = not st.session_state.get("show_examples", False)
+    
+    st.markdown("---")
+    
+    # About
+    st.header("ℹ️ About")
+    st.caption("""
+    **Hantec Markets Trading Mentor**
+    
+    AI-powered assistant providing:
+    - Clear, concise trading guidance
+    - Step-by-step learning
+    - Beginner-friendly explanations
+    
+    *Responses are educational only. 
+    Not financial advice.*
+    """)
 
-**Context:** {Context}
+# ========================================
+# EXAMPLE QUESTIONS (Optional Display)
+# ========================================
+if st.session_state.get("show_examples", False):
+    st.info("💡 **Example Questions:**")
+    examples = [
+        "What is forex trading?",
+        "How do I manage risk in trading?",
+        "Explain support and resistance",
+        "What are stop-loss orders?",
+        "How to read candlestick charts?"
+    ]
+    for example in examples:
+        if st.button(f"📌 {example}", key=example):
+            st.session_state.messages.append({"role": "user", "content": example})
+            st.session_state.show_examples = False
+            st.rerun()
 
-**Constraints:** {Constraints}
+# ========================================
+# MAIN CHAT INTERFACE
+# ========================================
 
-**Structure:** {Structure}
+# Display chat history
+for message in st.session_state.messages:
+    if message["role"] == "user":
+        st.markdown(f"""
+            <div class="chat-message user-message">
+                <strong>👤 You:</strong><br>{message["content"]}
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+            <div class="chat-message assistant-message">
+                <strong>🤖 Trading Mentor:</strong><br>{message["content"]}
+            </div>
+        """, unsafe_allow_html=True)
 
-**Checkpoints:** {Checkpoint}
+# Chat input
+user_question = st.chat_input(
+    "Ask your trading question here...",
+    disabled=not st.session_state.api_key_set
+)
 
-**Review:** {Review}
+# ========================================
+# PROCESS USER QUESTION
+# ========================================
+if user_question:
+    # Add user message to history
+    st.session_state.messages.append({"role": "user", "content": user_question})
+    
+    # Display user message immediately
+    st.markdown(f"""
+        <div class="chat-message user-message">
+            <strong>👤 You:</strong><br>{user_question}
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Generate AI response
+    if st.session_state.api_key_set:
+        with st.spinner("🤔 Mentor is thinking..."):
+            try:
+                # System prompt for trading mentor personality
+                system_prompt = """You are a professional trading mentor at Hantec Markets. Your role is to educate traders with clear, concise guidance.
 
-**User's Draft Prompt:**
-{draft}
+**Your Communication Style:**
+- Keep answers SHORT: 3-5 sentences maximum (50-80 words)
+- Use simple language, avoid jargon unless explaining it
+- Break complex topics into digestible steps
+- Be encouraging and supportive
+- Focus on practical, actionable advice
+- Include specific examples when helpful
 
-**Instructions:**
-1. Generate an enhanced, production-ready prompt incorporating all CC-SC-R elements
-2. Make it clear, actionable, and comprehensive
-3. Ask ONE specific clarifying question to further improve it
-4. Format the enhanced prompt in a structured way
+**Your Expertise:**
+- Forex trading, CFDs, commodities
+- Technical analysis & chart reading
+- Risk management & psychology
+- Trading strategies for beginners to intermediate
 
-**Output Format:**
-- Enhanced Prompt (full text with CC-SC-R integrated)
-- Clarifying Question (1 specific question)
-- Key Improvements (3 bullets, ≤12 words each)"""
+**Important Rules:**
+1. NEVER give specific trade recommendations (buy/sell signals)
+2. Always emphasize risk management
+3. Remind users trading involves risk
+4. Be educational, not advisory
+5. If asked about specific instruments, give general market education instead
 
-                        # Call OpenAI API
-                        response = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=[
-                                {"role": "system", "content": system_prompt},
-                                {"role": "user", "content": user_message}
-                            ],
-                            temperature=0.7,
-                            max_tokens=1000
-                        )
-                        
-                        # Extract the AI's response
-                        enhanced_prompt = response.choices[0].message.content
-                        
-                        # Display results
-                        st.success("✅ Prompt Enhanced by AI!")
-                        st.markdown("---")
-                        st.markdown(enhanced_prompt)
-                        
-                        # Show API usage info
-                        with st.expander("📊 API Usage Details"):
-                            col1, col2, col3 = st.columns(3)
-                            with col1:
-                                st.metric("Model", response.model)
-                            with col2:
-                                st.metric("Tokens Used", response.usage.total_tokens)
-                            with col3:
-                                cost = response.usage.total_tokens * 0.0000015
-                                st.metric("Cost", f"${cost:.6f}")
-                            
-                            st.caption("💰 GPT-4o-mini: $0.150 per 1M input tokens, $0.600 per 1M output tokens")
-                        
-                        # Download button for enhanced prompt
-                        st.download_button(
-                            label="📥 Download Enhanced Prompt",
-                            data=enhanced_prompt,
-                            file_name="enhanced_prompt.txt",
-                            mime="text/plain"
-                        )
+**Format:**
+- Start with a direct answer
+- Add 1-2 supporting points
+- End with a practical tip or next step
+
+Remember: You're a mentor teaching concepts, not a financial advisor giving recommendations."""
+
+                # Call OpenAI API
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        *[{"role": m["role"], "content": m["content"]} 
+                          for m in st.session_state.messages[-5:]],  # Last 5 messages for context
+                    ],
+                    temperature=0.7,
+                    max_tokens=150  # Keep responses concise
+                )
                 
-                except Exception as e:
-                    st.error(f"❌ Error calling OpenAI API: {str(e)}")
-                    st.info("💡 Common issues:")
-                    st.markdown("""
-                    - Check your API key is correct
-                    - Verify you have credits in your OpenAI account
-                    - Ensure your API key has proper permissions
-                    """)
+                # Extract response
+                assistant_message = response.choices[0].message.content
+                
+                # Add to history
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": assistant_message
+                })
+                
+                # Display assistant message
+                st.markdown(f"""
+                    <div class="chat-message assistant-message">
+                        <strong>🤖 Trading Mentor:</strong><br>{assistant_message}
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Show usage stats in expander
+                with st.expander("📊 Response Stats"):
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Tokens", response.usage.total_tokens)
+                    with col2:
+                        cost = response.usage.total_tokens * 0.0000015
+                        st.metric("Cost", f"${cost:.6f}")
+                    with col3:
+                        words = len(assistant_message.split())
+                        st.metric("Words", words)
+                
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+                st.info("💡 Make sure your API key is valid and you have credits available.")
+    
+    # Force refresh to show new messages
+    st.rerun()
 
 # ========================================
-# SIDEBAR - ADDITIONAL INFO
+# FOOTER
 # ========================================
-st.sidebar.markdown("---")
-st.sidebar.subheader("ℹ️ About CC-SC-R")
-st.sidebar.markdown("""
-**Context:** Who, what, where, when, why?
-
-**Constraints:** Limits, policies, regulations
-
-**Structure:** Required format, sections
-
-**Checkpoints:** Assumptions, risks to validate
-
-**Review:** Approval process, escalation
-""")
-
-st.sidebar.markdown("---")
-st.sidebar.subheader("💡 Tips")
-st.sidebar.markdown("""
-- Be specific in your draft prompt
-- Fill in all CC-SC-R fields
-- Use Live Mode for best results
-- Download enhanced prompts for reuse
-""")
-
-st.sidebar.markdown("---")
-st.sidebar.caption("Built with Streamlit + OpenAI API")
+st.markdown("---")
+st.markdown("""
+    <div style='text-align: center; color: #666; font-size: 0.9em;'>
+        <p>⚠️ <strong>Disclaimer:</strong> This AI mentor provides educational content only. 
+        Trading involves substantial risk. Always do your own research and consult licensed financial advisors.</p>
+        <p style='margin-top: 10px;'>
+            <strong>Hantec Markets</strong> | Powered by OpenAI GPT-4o-mini | 
+            <a href='https://www.hantecmarkets.com' target='_blank' style='color: #1e3c72;'>Visit Our Website</a>
+        </p>
+    </div>
+""", unsafe_allow_html=True)
