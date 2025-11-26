@@ -28,8 +28,27 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
+    
+    /* CRITICAL: Remove ALL horizontal dividers and lines */
     hr {display: none !important;}
     .css-1544g2n {display: none !important;}
+    div[data-testid="stHorizontalBlock"] {border: none !important;}
+    div[data-testid="column"] {border: none !important; border-right: none !important; border-left: none !important;}
+    .element-container hr {display: none !important;}
+    .stMarkdown hr {display: none !important;}
+    [data-testid="stVerticalBlock"] > div {border: none !important;}
+    section[data-testid="stSidebar"] hr {display: none !important;}
+    
+    /* Remove any borders from all containers */
+    .main > div {border: none !important;}
+    .block-container > div {border: none !important;}
+    .row-widget {border: none !important;}
+    .stHorizontalBlock {border: none !important; gap: 0 !important;}
+    
+    /* Additional selectors to catch any dividers */
+    div[class*="divider"] {display: none !important;}
+    div[class*="separator"] {display: none !important;}
+    .css-ocqkz7 {border: none !important;}
     
     .main { background-color: #fafafa; }
     .block-container { padding-top: 0 !important; max-width: 100% !important; }
@@ -86,7 +105,7 @@ st.markdown("""
     div[data-testid="column"] {
         padding: 0 10px !important;
         background: transparent;
-        border: none;
+        border: none !important;
     }
     
     .stMarkdown > div {
