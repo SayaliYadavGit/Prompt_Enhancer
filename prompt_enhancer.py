@@ -28,6 +28,8 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
+    hr {display: none !important;}
+    .css-1544g2n {display: none !important;}
     
     .main { background-color: #fafafa; }
     .block-container { padding-top: 0 !important; max-width: 100% !important; }
@@ -508,7 +510,6 @@ elif st.session_state.current_view == "learning":
         st.session_state.current_view = "home"
         st.rerun()
     
-    st.markdown("---")
     st.markdown("## Learning plan will be built here based on your profile")
 
 # TOUR VIEW
@@ -519,5 +520,4 @@ elif st.session_state.current_view == "tour":
         st.session_state.current_view = "home"
         st.rerun()
     
-    st.markdown("---")
     st.markdown("## Platform walkthrough content here")
