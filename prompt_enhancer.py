@@ -610,9 +610,9 @@ elif st.session_state.current_view == "trading":
             <div class="message-row">
                 <div class="message-avatar avatar-hantec">H</div>
                 <div class="message-content">
-                    <strong>Perfect! I'll guide you all the way.</strong><br><br>
-                    I'll tailor everything based on your experience level, so you only see what matters most to you.<br><br>
-                    Let's get you set up for trading success!
+                    <strong>Perfect! I will guide you all the way.</strong><br><br>
+                    I will tailor everything based on your experience level, so you only see what matters most to you.<br><br>
+                    Let us get you set up for trading success!
                 </div>
             </div>
         """, unsafe_allow_html=True)
