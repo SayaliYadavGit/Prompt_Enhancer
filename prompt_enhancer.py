@@ -449,10 +449,46 @@ if st.session_state.current_view == "home":
     
     # Chat Input
     st.markdown('<div class="chat-input-area">', unsafe_allow_html=True)
+    
+    if not st.session_state.api_key_set:
+        st.info("👆 Enter your OpenAI API key in the sidebar to start chatting")
+    
     if prompt := st.chat_input("Ask me anything...", disabled=not st.session_state.api_key_set):
+        # Add user message
         st.session_state.current_view = "trading"
         st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Get AI response
+        if st.session_state.api_key_set:
+            try:
+                with st.spinner("Thinking..."):
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": """You are Hantec One AI trading assistant. 
+                            
+Keep responses SHORT and helpful (2-3 sentences, under 60 words).
+Help users with:
+- Trading questions
+- CFD basics
+- Platform features
+- Account setup
+- Risk management
+
+Be friendly, professional, and concise. Never give specific buy/sell signals."""},
+                            *[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-6:]]
+                        ],
+                        temperature=0.7,
+                        max_tokens=150
+                    )
+                    answer = response.choices[0].message.content
+                    st.session_state.messages.append({"role": "assistant", "content": answer})
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+                st.info("Check your API key and try again.")
+        
         st.rerun()
+    
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Footer
@@ -515,8 +551,8 @@ elif st.session_state.current_view == "trading":
                 st.session_state.onboarding_step = 2
                 st.rerun()
     
-    # Display messages
-    for msg in st.session_state.messages:
+    # Display all messages
+    for i, msg in enumerate(st.session_state.messages):
         if msg["role"] == "user":
             st.markdown(f"""
                 <div class="message-row user-message-row">
@@ -550,7 +586,7 @@ elif st.session_state.current_view == "trading":
             st.rerun()
     
     # Step 3: Done + next steps
-    if st.session_state.onboarding_step == 3 and len(st.session_state.messages) == 2:
+    elif st.session_state.onboarding_step == 3 and len(st.session_state.messages) == 2:
         st.markdown("""
             <div class="message-row">
                 <div class="message-avatar avatar-hantec">H</div>
@@ -566,40 +602,54 @@ elif st.session_state.current_view == "trading":
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("Start live trading right away", key="opt1", use_container_width=True):
+            if st.button("Start live trading", key="opt1", use_container_width=True):
                 st.session_state.messages.append({"role": "user", "content": "Start live trading right away"})
+                st.session_state.onboarding_step = 4
                 st.rerun()
         with col2:
-            if st.button("Open a demo account", key="opt2", use_container_width=True):
+            if st.button("Demo account", key="opt2", use_container_width=True):
                 st.session_state.messages.append({"role": "user", "content": "Open a demo account and practice"})
+                st.session_state.onboarding_step = 4
                 st.rerun()
         with col3:
-            if st.button("Try a product demo", key="opt3", use_container_width=True):
+            if st.button("Product demo", key="opt3", use_container_width=True):
                 st.session_state.messages.append({"role": "user", "content": "Try a quick product demo"})
+                st.session_state.onboarding_step = 4
                 st.rerun()
+    
+    # Step 4+: Free chat enabled
+    elif st.session_state.onboarding_step >= 4 or len(st.session_state.messages) > 2:
+        st.session_state.onboarding_step = 4  # Enable free chat
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Chat input
+    # Chat input - Always available when API key is set
     if prompt := st.chat_input("Ask me anything...", disabled=not st.session_state.api_key_set):
         st.session_state.messages.append({"role": "user", "content": prompt})
         
         if st.session_state.api_key_set:
             try:
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": "system", "content": "You are Hantec One AI. Keep responses under 50 words. Be helpful and friendly."},
-                        *[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-5:]]
-                    ],
-                    temperature=0.7,
-                    max_tokens=100
-                )
-                answer = response.choices[0].message.content
-                st.session_state.messages.append({"role": "assistant", "content": answer})
-                st.rerun()
+                with st.spinner("Thinking..."):
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": """You are Hantec One AI trading assistant. 
+
+Keep responses SHORT (2-3 sentences, max 60 words).
+Help with trading, CFDs, platform features, account setup.
+Be friendly and professional. Never give buy/sell signals."""},
+                            *[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-6:]]
+                        ],
+                        temperature=0.7,
+                        max_tokens=150
+                    )
+                    answer = response.choices[0].message.content
+                    st.session_state.messages.append({"role": "assistant", "content": answer})
+                    st.session_state.onboarding_step = 4  # Enable free chat
             except Exception as e:
                 st.error(f"Error: {str(e)}")
+        
+        st.rerun()
     
     st.markdown("""
         <div class="page-footer">
