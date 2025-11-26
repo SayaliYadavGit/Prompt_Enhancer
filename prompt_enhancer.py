@@ -579,27 +579,41 @@ else:
     # Display chat history
     for i, msg in enumerate(st.session_state.chat_history):
         if msg["role"] == "assistant":
-            # Show "Done✅" only if this is not the last message  
-            status_html = '<div class="message-status">Done✅</div>' if i < len(st.session_state.chat_history) - 1 else ''
+            # AI message with avatar
+            col_avatar, col_content = st.columns([1, 15])
             
-            st.markdown(f"""
-                <div class="message-row">
-                    <div class="message-avatar">H</div>
-                    <div class="message-content">
-                        <div class="message-bubble">{msg['content']}</div>
-                        {status_html}
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+            with col_avatar:
+                st.markdown("""
+                    <div style="width: 40px; height: 40px; background: #2d3748; border-radius: 50%; 
+                                display: flex; align-items: center; justify-content: center; 
+                                color: white; font-weight: 700; font-size: 16px;">H</div>
+                """, unsafe_allow_html=True)
+            
+            with col_content:
+                # Use st.markdown without HTML wrapper to properly render markdown
+                st.markdown(msg['content'])
+                
+                # Show "Done✅" status if not the last message
+                if i < len(st.session_state.chat_history) - 1:
+                    st.caption("Done✅")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
         else:
-            st.markdown(f"""
-                <div class="message-row user">
-                    <div class="message-avatar user">{user_name[0]}</div>
-                    <div class="message-content">
-                        <div class="message-bubble">{msg['content']}</div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+            # User message with avatar on right
+            col_content, col_avatar = st.columns([15, 1])
+            
+            with col_content:
+                st.markdown(f'<div style="text-align: right; background: #f7fafc; padding: 12px 16px; border-radius: 12px; margin-left: 60px;">{msg["content"]}</div>', unsafe_allow_html=True)
+            
+            with col_avatar:
+                st.markdown(f"""
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+                                color: white; font-weight: 700; font-size: 16px;">{user_name[0]}</div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
     
     # Quick action buttons (show after first AI message)
     if len(st.session_state.chat_history) == 1 and st.session_state.selected_option == "start_trading":
