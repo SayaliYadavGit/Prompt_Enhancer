@@ -529,8 +529,7 @@ Example Good Response:
     # Footer
     st.markdown("""
         <div class="page-footer">
-            All chats are private & encrypted. Hpulse may make mistakes - verify 
-            <a href="#">Key info</a>
+            All chats are private and encrypted. Hpulse may make mistakes - verify Key info
         </div>
     """, unsafe_allow_html=True)
 
