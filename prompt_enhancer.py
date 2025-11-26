@@ -465,17 +465,52 @@ if st.session_state.current_view == "home":
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[
-                            {"role": "system", "content": """You are Hantec One AI trading assistant. 
-                            
-Keep responses SHORT and helpful (2-3 sentences, under 60 words).
-Help users with:
-- Trading questions
-- CFD basics
-- Platform features
-- Account setup
-- Risk management
+                            {"role": "system", "content": """You are Hantec One AI trading mentor. Follow these strict guidelines:
 
-Be friendly, professional, and concise. Never give specific buy/sell signals."""},
+**Brand Voice:**
+- Knowledgeable but humble ("I'm here to help you learn")
+- Empowering and patient
+- Never condescending
+- Motivational and celebratory of milestones
+
+**Response Style:**
+- SHORT answers (2-3 sentences, max 60 words)
+- Use bullet points for lists
+- Be precise and to-the-point
+- Use **bold** for emphasis
+
+**What You CAN Help With:**
+- Trading education and concepts
+- Platform navigation
+- Onboarding guidance
+- CFD basics
+- Risk management education
+
+**What You MUST NEVER Do:**
+- Give specific buy/sell signals
+- Guarantee returns
+- Provide financial advice
+- Share personal information
+
+**Compliance - ALWAYS Include:**
+- Risk disclaimers on trading questions
+- "For educational purposes only" on investment topics
+- "Not financial advice" disclaimer
+
+**Response Format:**
+Keep it conversational but structured. Use emojis sparingly (✅ ⚠️ 📊).
+
+**If Unclear:**
+Say: "I didn't understand. Can we try this again?" and offer multiple choice options.
+
+**Escalation Triggers - Redirect to support if:**
+- Account access issues
+- Fund withdrawal problems
+- Unauthorized trades mentioned
+- Complex compliance questions
+
+Example Good Response:
+"Leverage lets you control larger positions with less capital. With 1:100 leverage, $100 controls $10,000. ⚠️ **Important:** It multiplies both gains AND losses. Start with lower leverage (1:10) while learning. *For educational purposes only.*"},
                             *[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-6:]]
                         ],
                         temperature=0.7,
@@ -522,32 +557,33 @@ elif st.session_state.current_view == "trading":
     # Chat Container
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     
-    # Initial greeting
+    # Initial greeting - Updated per spec
     if st.session_state.onboarding_step == 1 and not st.session_state.messages:
         st.markdown("""
             <div class="message-row">
                 <div class="message-avatar avatar-hantec">H</div>
                 <div class="message-content">
-                    <strong>Awesome! Let's get you started 💝</strong><br><br>
-                    Before we begin — can you tell me how familiar you are with trading? Pick one below
+                    <strong>Hi, I am your trading mentor. Let's start live trading! 🚀</strong><br><br>
+                    I can help you complete onboarding, add funds, and place your first trade.<br><br>
+                    Before we begin — how much trading experience do you have?
                 </div>
             </div>
         """, unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns([1.2, 1.5, 1.5])
         with col1:
-            if st.button("I'm completely new", key="new", use_container_width=True):
-                st.session_state.messages.append({"role": "user", "content": "I'm completely new"})
+            if st.button("No experience", key="new", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": "No experience"})
                 st.session_state.onboarding_step = 2
                 st.rerun()
         with col2:
-            if st.button("I have some experience", key="some", use_container_width=True):
-                st.session_state.messages.append({"role": "user", "content": "I have some experience"})
+            if st.button("Some experience", key="some", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": "Some experience"})
                 st.session_state.onboarding_step = 2
                 st.rerun()
         with col3:
-            if st.button("I'm an experienced trader", key="exp", use_container_width=True):
-                st.session_state.messages.append({"role": "user", "content": "I'm an experienced trader"})
+            if st.button("Experienced trader", key="exp", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": "Experienced trader"})
                 st.session_state.onboarding_step = 2
                 st.rerun()
     
@@ -568,14 +604,15 @@ elif st.session_state.current_view == "trading":
                 </div>
             """, unsafe_allow_html=True)
     
-    # Step 2: Response
+    # Step 2: Response - Updated per spec
     if st.session_state.onboarding_step == 2 and len(st.session_state.messages) == 1:
         st.markdown("""
             <div class="message-row">
                 <div class="message-avatar avatar-hantec">H</div>
                 <div class="message-content">
-                    <strong>Perfect! I'll keep things simple and guide you all the way.</strong><br><br>
-                    I'll tailor things based on your experience, so you only see what matters most to you
+                    <strong>Perfect! I'll guide you all the way. ✅</strong><br><br>
+                    I'll tailor everything based on your experience level, so you only see what matters most to you.<br><br>
+                    Let's get you set up for trading success!
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -665,7 +702,87 @@ Be friendly and professional. Never give buy/sell signals."""},
         st.rerun()
 
 # ========================================
-# LEARN CFDs VIEW
+# NEW TO TRADING - LEARNING PATH
+# ========================================
+elif st.session_state.current_view == "learning":
+    st.markdown("### 📚 New to Trading? Let's Build Your Learning Plan")
+    
+    if st.button("← Back to Home"):
+        st.session_state.current_view = "home"
+        st.rerun()
+    
+    st.markdown("---")
+    
+    st.markdown("""
+    ## Hey, don't worry—I'm here to assist you! 👋
+    
+    Let's get to know each other so I can create a personalized learning plan.
+    """)
+    
+    # Quick questionnaire
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        years_exp = st.selectbox(
+            "Years of trading experience:",
+            ["None - Complete beginner", "Less than 1 year", "1-3 years", "3-5 years", "5+ years"]
+        )
+        
+        age_range = st.selectbox(
+            "Your age range:",
+            ["18-25", "26-35", "36-45", "46-55", "56+"]
+        )
+    
+    with col2:
+        risk_tolerance = st.selectbox(
+            "Risk tolerance:",
+            ["Conservative - Preserve capital", "Moderate - Balanced approach", "Aggressive - Maximum growth"]
+        )
+        
+        learning_goal = st.selectbox(
+            "Primary learning goal:",
+            ["Understand basics", "Learn strategies", "Master technical analysis", "Risk management"]
+        )
+    
+    if st.button("Create My Learning Plan 🎯", type="primary", use_container_width=True):
+        st.success("✅ Learning plan created!")
+        
+        st.markdown("---")
+        st.markdown("## 📖 Your Personalized Curriculum")
+        
+        st.markdown("""
+        Based on your profile, here's your learning journey:
+        
+        ### Week 1: Trading Fundamentals
+        - ✅ What is CFD trading?
+        - ✅ Understanding leverage
+        - ✅ Key trading terminology
+        - ✅ Market types (Forex, Indices, Commodities)
+        
+        ### Week 2: Platform Basics
+        - ✅ Navigate Hantec dashboard
+        - ✅ Place your first demo trade
+        - ✅ Understanding order types
+        - ✅ Reading charts basics
+        
+        ### Week 3: Risk Management
+        - ✅ Position sizing
+        - ✅ Stop-loss strategies
+        - ✅ Risk/reward ratios
+        - ✅ Portfolio management
+        
+        ### Week 4: Technical Analysis Intro
+        - ✅ Support & resistance
+        - ✅ Trend identification
+        - ✅ Key indicators (MA, RSI, MACD)
+        
+        **⚠️ Important:** Practice on demo account before live trading. All trading involves risk.
+        
+        [Start Week 1 →] [Open Demo Account →]
+        """)
+
+# ========================================
+# LEARN CFDs VIEW (Renamed from previous)
 # ========================================
 elif st.session_state.current_view == "cfds":
     st.markdown("### 📚 Learn CFDs")
