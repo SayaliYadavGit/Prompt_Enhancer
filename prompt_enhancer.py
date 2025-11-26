@@ -285,6 +285,7 @@ with st.sidebar:
         if st.button("← Back to Welcome"):
             st.session_state.conversation_started = False
             st.session_state.selected_option = None
+            st.session_state.last_processed_message = ""
             st.rerun()
     else:
         st.caption("No active conversation")
@@ -308,6 +309,10 @@ if 'user_state' not in st.session_state:
     st.session_state.user_state = "onboarding"
 if 'onboarding_step' not in st.session_state:
     st.session_state.onboarding_step = 2
+if 'last_processed_message' not in st.session_state:
+    st.session_state.last_processed_message = ""
+if 'processing' not in st.session_state:
+    st.session_state.processing = False
 
 # Function to get system prompt with CC-SC-R framework
 def get_system_prompt(user_context):
@@ -476,13 +481,53 @@ if not st.session_state.conversation_started:
     with col_mic:
         st.markdown("<div style='padding-top: 8px; font-size: 20px; color: #94a3b8;'>🎤</div>", unsafe_allow_html=True)
     
-    if welcome_input:
-        st.session_state.conversation_started = True
-        st.session_state.selected_option = "general"
-        st.session_state.chat_history = [
-            {"role": "user", "content": welcome_input}
-        ]
-        st.rerun()
+    if welcome_input and welcome_input != st.session_state.last_processed_message:
+        if not api_key:
+            st.error("❌ Please enter your OpenAI API key in the sidebar to chat", icon="🔒")
+        else:
+            # Mark as processing
+            st.session_state.last_processed_message = welcome_input
+            st.session_state.conversation_started = True
+            st.session_state.selected_option = "general"
+            
+            # Add user message
+            st.session_state.chat_history = [
+                {"role": "user", "content": welcome_input}
+            ]
+            
+            # Generate AI response
+            try:
+                client = OpenAI(api_key=api_key)
+                
+                user_context = {
+                    'state': st.session_state.user_state,
+                    'step': st.session_state.onboarding_step,
+                    'language': user_language,
+                    'name': user_name,
+                    'path': 'general'
+                }
+                
+                system_prompt = get_system_prompt(user_context)
+                
+                with st.spinner("🤖 AI Mentor is thinking..."):
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": welcome_input}
+                        ],
+                        temperature=0.7,
+                        max_tokens=400
+                    )
+                    
+                    assistant_response = response.choices[0].message.content
+                    st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+                
+                st.rerun()
+            
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}", icon="⚠️")
+                st.session_state.conversation_started = False
     
     st.markdown("""
         <div class="chat-disclaimer">
@@ -520,6 +565,7 @@ else:
         if st.button("✕", key="close_thread"):
             st.session_state.conversation_started = False
             st.session_state.chat_history = []
+            st.session_state.last_processed_message = ""
             st.rerun()
     
     # Chat messages container
@@ -592,11 +638,14 @@ else:
         st.markdown("<div style='padding-top: 8px; font-size: 20px; color: #94a3b8;'>🎤</div>", unsafe_allow_html=True)
     
     # Process chat input
-    if user_input:
+    if user_input and user_input != st.session_state.last_processed_message:
         if not api_key:
             st.error("❌ Please enter your OpenAI API key in the sidebar", icon="🔒")
         else:
             try:
+                # Prevent duplicate processing
+                st.session_state.last_processed_message = user_input
+                
                 client = OpenAI(api_key=api_key)
                 
                 # Build user context
@@ -632,6 +681,7 @@ else:
             
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}", icon="⚠️")
+                st.session_state.last_processed_message = ""  # Reset on error
     
     # Disclaimer
     st.markdown("""
@@ -650,6 +700,7 @@ else:
         if st.button("🗑️ Clear Chat", use_container_width=True):
             st.session_state.chat_history = []
             st.session_state.conversation_started = False
+            st.session_state.last_processed_message = ""
             st.rerun()
     
     with col_export:
