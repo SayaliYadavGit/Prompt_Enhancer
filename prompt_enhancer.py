@@ -413,8 +413,8 @@ if st.session_state.current_view == "home":
             <div class="hantec-avatar">
                 <span class="avatar-h">H</span>
             </div>
-            <h1 class="welcome-title">Welcome to Hantec One 👋</h1>
-            <p class="welcome-subtitle">Pick an option below to continue — or ask me anything to get started</p>
+            <h1 class="welcome-title">Welcome to Hantec One</h1>
+            <p class="welcome-subtitle">Pick an option below to continue - or ask me anything to get started</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -440,7 +440,7 @@ if st.session_state.current_view == "home":
             st.rerun()
     
     with col3:
-        st.markdown("### 💬 Take a Quick Tour")
+        st.markdown("### Take a Quick Tour")
         st.markdown("A quick walkthrough of your dashboard, features and charts")
         st.markdown("<br><br>", unsafe_allow_html=True)
         if st.button("→", key="btn3"):
@@ -451,7 +451,7 @@ if st.session_state.current_view == "home":
     st.markdown('<div class="chat-input-area">', unsafe_allow_html=True)
     
     if not st.session_state.api_key_set:
-        st.info("👆 Enter your OpenAI API key in the sidebar to start chatting")
+        st.info("Enter your OpenAI API key in the sidebar to start chatting")
     
     if prompt := st.chat_input("Ask me anything...", disabled=not st.session_state.api_key_set):
         # Add user message
@@ -632,7 +632,7 @@ elif st.session_state.current_view == "trading":
                         <span>DONE</span>
                         <span>Done</span>
                     </div>
-                    <div>Now tell me what you'd like to do next</div>
+                    <div>Now tell me what you would like to do next</div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -705,7 +705,7 @@ Be friendly and professional. Never give buy/sell signals."""},
 # NEW TO TRADING - LEARNING PATH
 # ========================================
 elif st.session_state.current_view == "learning":
-    st.markdown("### 📚 New to Trading? Let's Build Your Learning Plan")
+    st.markdown("### New to Trading? Let us Build Your Learning Plan")
     
     if st.button("← Back to Home"):
         st.session_state.current_view = "home"
@@ -751,7 +751,7 @@ elif st.session_state.current_view == "learning":
         st.markdown("## Your Personalized Curriculum")
         
         st.markdown("""
-        Based on your profile, here's your learning journey:
+        Based on your profile, here is your learning journey:
         
         ### Week 1: Trading Fundamentals
         - What is CFD trading?
@@ -828,10 +828,10 @@ elif st.session_state.current_view == "tour":
     Learn about your dashboard, features, and trading tools.
     
     ### Dashboard Overview
-    - **Account balance and equity**: Track your funds in real-time
-    - **Open positions**: Monitor all active trades
-    - **Market watchlist**: Follow your favorite instruments
-    - **Trading history**: Review past performance
+    - Account balance and equity
+    - Open positions
+    - Market watchlist
+    - Trading history
     
     ### Trading Platform Features
     - Multiple chart types and timeframes
