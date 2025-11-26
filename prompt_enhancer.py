@@ -424,30 +424,32 @@ if st.session_state.current_view == "home":
         </div>
     """, unsafe_allow_html=True)
     
-    # Main Action Cards - Pure Streamlit (no HTML)
+    # Main Action Cards - Match Figma Design
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("### 🚀 Start Live Trading")
         st.markdown("Tell me your goal and account preferences — I'll set up your account to start trading")
-        if st.button("→", key="btn1", use_container_width=True):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("→", key="btn1"):
             st.session_state.current_view = "trading"
             st.session_state.onboarding_step = 1
             st.rerun()
     
     with col2:
-        st.markdown("### 📚 Learn CFDs")
-        st.markdown("📖 Master the fundamentals")
-        st.markdown("📊 Try simple examples")
-        st.markdown("📈 Level up your skills")
-        if st.button("→", key="btn2", use_container_width=True):
+        st.markdown("### 📚 Master the fundamentals")
+        st.markdown("📖 Try simple examples")
+        st.markdown("📊 Level up your skills")
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("→", key="btn2"):
             st.session_state.current_view = "cfds"
             st.rerun()
     
     with col3:
-        st.markdown("### 💬 Take a Quick Tour")
+        st.markdown("### 💬")
         st.markdown("A quick walkthrough of your dashboard, features and charts")
-        if st.button("→", key="btn3", use_container_width=True):
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        if st.button("→", key="btn3"):
             st.session_state.current_view = "tour"
             st.rerun()
     
