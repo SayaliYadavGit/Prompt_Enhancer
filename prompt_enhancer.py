@@ -34,7 +34,7 @@ st.markdown("""
     
     section[data-testid="stSidebar"] {
         background-color: white;
-        border-right: 1px solid #e8e8e8;
+        border-right: none;
         width: 300px !important;
     }
     
@@ -160,8 +160,8 @@ st.markdown("""
     .chat-header {
         background: white;
         padding: 15px 20px;
-        border: 1px solid #e8e8e8;
-        border-radius: 8px;
+        border: none;
+        border-radius: 0px;
         margin: 20px auto;
         max-width: 900px;
         display: flex;
