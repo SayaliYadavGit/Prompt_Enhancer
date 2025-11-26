@@ -314,15 +314,6 @@ if 'last_processed_message' not in st.session_state:
 if 'processing' not in st.session_state:
     st.session_state.processing = False
 
-import re
-
-# Function to clean HTML tags from text
-def clean_html_tags(text):
-    """Remove any HTML tags from text"""
-    # Remove HTML tags
-    text = re.sub(r'<[^>]+>', '', text)
-    return text.strip()
-
 # Function to get system prompt with CC-SC-R framework
 def get_system_prompt(user_context):
     return f"""You are the Hantec Markets AI Mentor, a conversational assistant guiding users through CFD trading.
@@ -343,11 +334,14 @@ CRITICAL CONSTRAINTS:
 
 RESPONSE STRUCTURE:
 - Keep answers SHORT (2-4 sentences max)
-- Use bullet points when listing items
+- Use bullet points when listing items  
 - Use **bold** for emphasis
 - Include ⚠️ for warnings
 - Add links with [Link text →]
-- NEVER use HTML tags like <div>, <span>, etc. - use only plain text and markdown
+- Use plain text and simple markdown ONLY
+- DO NOT use code blocks (```) or code fences
+- DO NOT include HTML tags, CSS, or any technical markup in your responses
+- You are a trading mentor, not a coding tutor - keep responses conversational
 
 PERSONALITY:
 - Knowledgeable but humble
@@ -531,8 +525,8 @@ if not st.session_state.conversation_started:
                     )
                     
                     assistant_response = response.choices[0].message.content
-                    # Clean any HTML tags from the response
-                    assistant_response = clean_html_tags(assistant_response)
+                    
+                    
                     st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
                 
                 st.rerun()
@@ -684,8 +678,8 @@ else:
                     )
                     
                     assistant_response = response.choices[0].message.content
-                    # Clean any HTML tags from the response
-                    assistant_response = clean_html_tags(assistant_response)
+                    
+                    
                     st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
                 
                 st.rerun()
