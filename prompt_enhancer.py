@@ -543,7 +543,7 @@ elif st.session_state.current_view == "trading":
     st.markdown("""
         <div class="chat-header">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <span>▼</span>
+                <span>v</span>
                 <span style="font-weight: 600;">Getting started!</span>
                 <span class="section-badge">Current</span>
             </div>
@@ -563,9 +563,9 @@ elif st.session_state.current_view == "trading":
             <div class="message-row">
                 <div class="message-avatar avatar-hantec">H</div>
                 <div class="message-content">
-                    <strong>Hi, I am your trading mentor. Let's start live trading! 🚀</strong><br><br>
+                    <strong>Hi, I am your trading mentor. Let's start live trading!</strong><br><br>
                     I can help you complete onboarding, add funds, and place your first trade.<br><br>
-                    Before we begin — how much trading experience do you have?
+                    Before we begin - how much trading experience do you have?
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -610,14 +610,14 @@ elif st.session_state.current_view == "trading":
             <div class="message-row">
                 <div class="message-avatar avatar-hantec">H</div>
                 <div class="message-content">
-                    <strong>Perfect! I'll guide you all the way. ✅</strong><br><br>
+                    <strong>Perfect! I'll guide you all the way.</strong><br><br>
                     I'll tailor everything based on your experience level, so you only see what matters most to you.<br><br>
                     Let's get you set up for trading success!
                 </div>
             </div>
         """, unsafe_allow_html=True)
         
-        if st.button("Continue →", key="cont"):
+        if st.button("Continue ->", key="cont"):
             st.session_state.messages.append({"role": "assistant", "content": "Perfect! I'll keep things simple and guide you all the way.<br><br>I'll tailor things based on your experience, so you only see what matters most to you"})
             st.session_state.onboarding_step = 3
             st.rerun()
@@ -629,7 +629,7 @@ elif st.session_state.current_view == "trading":
                 <div class="message-avatar avatar-hantec">H</div>
                 <div class="message-content">
                     <div class="status-done">
-                        <span>✅</span>
+                        <span>DONE</span>
                         <span>Done</span>
                     </div>
                     <div>Now tell me what you'd like to do next</div>
@@ -714,7 +714,7 @@ elif st.session_state.current_view == "learning":
     st.markdown("---")
     
     st.markdown("""
-    ## Hey, don't worry—I'm here to assist you! 👋
+    ## Hey, don't worry - I'm here to assist you!
     
     Let's get to know each other so I can create a personalized learning plan.
     """)
@@ -744,41 +744,41 @@ elif st.session_state.current_view == "learning":
             ["Understand basics", "Learn strategies", "Master technical analysis", "Risk management"]
         )
     
-    if st.button("Create My Learning Plan 🎯", type="primary", use_container_width=True):
-        st.success("✅ Learning plan created!")
+            if st.button("Create My Learning Plan", type="primary", use_container_width=True):
+        st.success("Learning plan created!")
         
         st.markdown("---")
-        st.markdown("## 📖 Your Personalized Curriculum")
+        st.markdown("## Your Personalized Curriculum")
         
         st.markdown("""
         Based on your profile, here's your learning journey:
         
         ### Week 1: Trading Fundamentals
-        - ✅ What is CFD trading?
-        - ✅ Understanding leverage
-        - ✅ Key trading terminology
-        - ✅ Market types (Forex, Indices, Commodities)
+        - What is CFD trading?
+        - Understanding leverage
+        - Key trading terminology
+        - Market types (Forex, Indices, Commodities)
         
         ### Week 2: Platform Basics
-        - ✅ Navigate Hantec dashboard
-        - ✅ Place your first demo trade
-        - ✅ Understanding order types
-        - ✅ Reading charts basics
+        - Navigate Hantec dashboard
+        - Place your first demo trade
+        - Understanding order types
+        - Reading charts basics
         
         ### Week 3: Risk Management
-        - ✅ Position sizing
-        - ✅ Stop-loss strategies
-        - ✅ Risk/reward ratios
-        - ✅ Portfolio management
+        - Position sizing
+        - Stop-loss strategies
+        - Risk/reward ratios
+        - Portfolio management
         
         ### Week 4: Technical Analysis Intro
-        - ✅ Support & resistance
-        - ✅ Trend identification
-        - ✅ Key indicators (MA, RSI, MACD)
+        - Support & resistance
+        - Trend identification
+        - Key indicators (MA, RSI, MACD)
         
-        **⚠️ Important:** Practice on demo account before live trading. All trading involves risk.
+        **Important:** Practice on demo account before live trading. All trading involves risk.
         
-        [Start Week 1 →] [Open Demo Account →]
+        [Start Week 1] [Open Demo Account]
         """)
 
 # ========================================
