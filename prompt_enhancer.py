@@ -619,10 +619,6 @@ else:
         
         with col_q4:
             st.markdown("<div style='padding-top: 8px; font-size: 20px; color: #cbd5e0;'>→</div>", unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
     
     # Chat input
     st.markdown("<br>", unsafe_allow_html=True)
