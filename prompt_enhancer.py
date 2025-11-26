@@ -530,7 +530,7 @@ Example Good Response:
     st.markdown("""
         <div class="page-footer">
             All chats are private & encrypted. Hpulse may make mistakes - verify 
-            <a href="#">Key info ↗</a>
+            <a href="#">Key info</a>
         </div>
     """, unsafe_allow_html=True)
 
