@@ -574,15 +574,12 @@ else:
     # Display chat history
     for i, msg in enumerate(st.session_state.chat_history):
         if msg["role"] == "assistant":
-            # Show "Done✅" only if this is not the last message
-            status_html = '<div class="message-status">Done✅</div>' if i < len(st.session_state.chat_history) - 1 else ''
-            
             st.markdown(f"""
                 <div class="message-row">
                     <div class="message-avatar">H</div>
                     <div class="message-content">
                         <div class="message-bubble">{msg['content']}</div>
-                        {status_html}
+                        {f'<div class="message-status">Done✅</div>' if i < len(st.session_state.chat_history) - 1 else ''}
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -619,6 +616,10 @@ else:
         
         with col_q4:
             st.markdown("<div style='padding-top: 8px; font-size: 20px; color: #cbd5e0;'>→</div>", unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Chat input
     st.markdown("<br>", unsafe_allow_html=True)
