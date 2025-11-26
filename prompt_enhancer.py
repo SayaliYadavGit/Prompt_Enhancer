@@ -529,7 +529,7 @@ Example Good Response:
     # Footer
     st.markdown("""
         <div class="page-footer">
-            All chats are private & encrypted. Hpulse may make mistakes — verify 
+            All chats are private & encrypted. Hpulse may make mistakes - verify 
             <a href="#">Key info ↗</a>
         </div>
     """, unsafe_allow_html=True)
@@ -690,7 +690,7 @@ Be friendly and professional. Never give buy/sell signals."""},
     
     st.markdown("""
         <div class="page-footer">
-            All chats are private & encrypted. Hpulse may make mistakes — verify 
+            All chats are private & encrypted. Hpulse may make mistakes - verify 
             <a href="#">Key info ↗</a>
         </div>
     """, unsafe_allow_html=True)
