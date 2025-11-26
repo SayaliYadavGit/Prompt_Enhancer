@@ -689,12 +689,11 @@ Be friendly and professional. Never give buy/sell signals."""},
     
     st.markdown("""
         <div class="page-footer">
-            All chats are private & encrypted. Hpulse may make mistakes - verify 
-            <a href="#">Key info ↗</a>
+            All chats are private and encrypted. Hpulse may make mistakes - verify Key info
         </div>
     """, unsafe_allow_html=True)
     
-    if st.button("← Back to Home"):
+    if st.button("Back to Home", key="back_trading"):
         st.session_state.current_view = "home"
         st.session_state.messages = []
         st.session_state.onboarding_step = 0
@@ -706,7 +705,7 @@ Be friendly and professional. Never give buy/sell signals."""},
 elif st.session_state.current_view == "learning":
     st.markdown("### New to Trading? Let us Build Your Learning Plan")
     
-    if st.button("← Back to Home"):
+    if st.button("Back to Home", key="back_learning"):
         st.session_state.current_view = "home"
         st.rerun()
     
@@ -786,7 +785,7 @@ elif st.session_state.current_view == "learning":
 elif st.session_state.current_view == "cfds":
     st.markdown("### 📚 Learn CFDs")
     
-    if st.button("← Back to Home"):
+    if st.button("Back to Home", key="back_cfds"):
         st.session_state.current_view = "home"
         st.rerun()
     
@@ -816,7 +815,7 @@ elif st.session_state.current_view == "cfds":
 elif st.session_state.current_view == "tour":
     st.markdown("### 💬 Take a Quick Tour")
     
-    if st.button("← Back to Home"):
+    if st.button("Back to Home", key="back_tour"):
         st.session_state.current_view = "home"
         st.rerun()
     
