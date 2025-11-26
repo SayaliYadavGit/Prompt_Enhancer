@@ -58,15 +58,9 @@ st.markdown("""
         padding: 30px 20px;
     }
     
-    /* Top Navigation */
+    /* Top Navigation - Hide it */
     .top-nav {
-        background: white;
-        padding: 10px 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #e8e8e8;
-        margin-bottom: 40px;
+        display: none;
     }
     
     .hantec-logo {
@@ -446,7 +440,7 @@ if st.session_state.current_view == "home":
             st.rerun()
     
     with col3:
-        st.markdown("### 💬")
+        st.markdown("### 💬 Take a Quick Tour")
         st.markdown("A quick walkthrough of your dashboard, features and charts")
         st.markdown("<br><br>", unsafe_allow_html=True)
         if st.button("→", key="btn3"):
