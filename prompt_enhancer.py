@@ -73,96 +73,6 @@ st.markdown("""
         font-size: 20px;
     }
     
-    /* Chat message bubbles */
-    .chat-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 20px 0;
-    }
-    
-    .message-row {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 24px;
-        align-items: flex-start;
-    }
-    
-    .message-row.user {
-        flex-direction: row-reverse;
-    }
-    
-    .message-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #2d3748;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 700;
-        font-size: 16px;
-        flex-shrink: 0;
-    }
-    
-    .message-avatar.user {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .message-content {
-        flex: 1;
-        max-width: 70%;
-    }
-    
-    .message-bubble {
-        background: white;
-        padding: 16px 20px;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        line-height: 1.6;
-        color: #2d3748;
-    }
-    
-    .message-row.user .message-bubble {
-        background: #f7fafc;
-        text-align: right;
-    }
-    
-    .message-status {
-        margin-top: 8px;
-        font-size: 13px;
-        color: #059669;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    /* Quick action buttons */
-    .quick-actions {
-        display: flex;
-        gap: 12px;
-        margin: 24px 0;
-        flex-wrap: wrap;
-    }
-    
-    .quick-action-btn {
-        background: white;
-        border: 1px solid #e2e8f0;
-        padding: 12px 20px;
-        border-radius: 24px;
-        font-size: 14px;
-        color: #2d3748;
-        cursor: pointer;
-        transition: all 0.2s;
-        white-space: nowrap;
-    }
-    
-    .quick-action-btn:hover {
-        background: #f7fafc;
-        border-color: #cbd5e0;
-        transform: translateY(-1px);
-    }
-    
     /* Chat input */
     .stTextInput > div > div > input {
         border-radius: 16px;
@@ -311,8 +221,6 @@ if 'onboarding_step' not in st.session_state:
     st.session_state.onboarding_step = 2
 if 'last_processed_message' not in st.session_state:
     st.session_state.last_processed_message = ""
-if 'processing' not in st.session_state:
-    st.session_state.processing = False
 
 # Function to get system prompt with CC-SC-R framework
 def get_system_prompt(user_context):
@@ -334,14 +242,10 @@ CRITICAL CONSTRAINTS:
 
 RESPONSE STRUCTURE:
 - Keep answers SHORT (2-4 sentences max)
-- Use bullet points when listing items  
+- Use bullet points when listing items
 - Use **bold** for emphasis
 - Include ⚠️ for warnings
 - Add links with [Link text →]
-- Use plain text and simple markdown ONLY
-- DO NOT use code blocks (```) or code fences
-- DO NOT include HTML tags, CSS, or any technical markup in your responses
-- You are a trading mentor, not a coding tutor - keep responses conversational
 
 PERSONALITY:
 - Knowledgeable but humble
