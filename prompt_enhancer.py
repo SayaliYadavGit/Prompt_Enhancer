@@ -568,18 +568,20 @@ else:
             st.session_state.last_processed_message = ""
             st.rerun()
     
-    # Chat messages container
-    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    # Chat messages display
     
     # Display chat history
     for i, msg in enumerate(st.session_state.chat_history):
         if msg["role"] == "assistant":
+            # Show "Done✅" only if this is not the last message  
+            status_html = '<div class="message-status">Done✅</div>' if i < len(st.session_state.chat_history) - 1 else ''
+            
             st.markdown(f"""
                 <div class="message-row">
                     <div class="message-avatar">H</div>
                     <div class="message-content">
                         <div class="message-bubble">{msg['content']}</div>
-                        {f'<div class="message-status">Done✅</div>' if i < len(st.session_state.chat_history) - 1 else ''}
+                        {status_html}
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -595,7 +597,6 @@ else:
     
     # Quick action buttons (show after first AI message)
     if len(st.session_state.chat_history) == 1 and st.session_state.selected_option == "start_trading":
-        st.markdown('<div class="quick-actions">', unsafe_allow_html=True)
         
         col_q1, col_q2, col_q3, col_q4 = st.columns([1.5, 2, 1.8, 0.3])
         
@@ -616,10 +617,6 @@ else:
         
         with col_q4:
             st.markdown("<div style='padding-top: 8px; font-size: 20px; color: #cbd5e0;'>→</div>", unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
     
     # Chat input
     st.markdown("<br>", unsafe_allow_html=True)
