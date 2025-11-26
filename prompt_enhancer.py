@@ -132,14 +132,30 @@ st.markdown("""
         margin-bottom: 50px;
     }
     
-    /* Main Cards */
-    .main-cards {
+    /* Main Cards - Fixed grid */
+    .main-cards-wrapper {
         max-width: 1400px;
         margin: 0 auto 50px;
         padding: 0 20px;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0;
+    }
+    
+    /* Remove gap styling since we're using columns */
+    div[data-testid="column"] {
+        padding: 0 !important;
+    }
+    
+    div[data-testid="column"]:first-child .card-box {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+    
+    div[data-testid="column"]:last-child .card-box {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+    
+    div[data-testid="column"]:not(:first-child) .card-box {
+        border-left: none;
     }
     
     .card-box {
@@ -408,80 +424,30 @@ if st.session_state.current_view == "home":
         </div>
     """, unsafe_allow_html=True)
     
-    # Main Action Cards
-    st.markdown("""
-        <div class="main-cards">
-            <div class="card-box" id="card-trading">
-                <div class="card-header">
-                    <span class="card-icon">🚀</span>
-                    <span class="card-title">Start Live Trading</span>
-                </div>
-                <div class="card-description">
-                    Tell me your goal and account preferences — I'll set up your account to start trading
-                </div>
-            </div>
-            
-            <div class="card-box" id="card-cfds">
-                <div class="card-header">
-                    <span class="card-icon">📚</span>
-                    <span class="card-title">Learn CFDs</span>
-                </div>
-                <div class="card-items">
-                    <div class="card-item">
-                        <span>📖</span>
-                        <span>Master the fundamentals</span>
-                    </div>
-                    <div class="card-item">
-                        <span>📊</span>
-                        <span>Try simple examples</span>
-                    </div>
-                    <div class="card-item">
-                        <span>📈</span>
-                        <span>Level up your skills</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card-box" id="card-tour">
-                <div class="card-header">
-                    <span class="card-icon">💬</span>
-                    <span class="card-title">Take a Quick Tour</span>
-                </div>
-                <div class="card-description">
-                    A quick walkthrough of your dashboard, features and charts
-                </div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # JavaScript to handle card clicks
-    st.markdown("""
-        <script>
-        document.getElementById('card-trading')?.addEventListener('click', () => {
-            window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'trading'}, '*');
-        });
-        document.getElementById('card-cfds')?.addEventListener('click', () => {
-            window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'cfds'}, '*');
-        });
-        document.getElementById('card-tour')?.addEventListener('click', () => {
-            window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'tour'}, '*');
-        });
-        </script>
-    """, unsafe_allow_html=True)
-    
-    # Hidden buttons for navigation (Streamlit way)
+    # Main Action Cards - Pure Streamlit (no HTML)
     col1, col2, col3 = st.columns(3)
+    
     with col1:
-        if st.button("🚀 Start Live Trading", key="btn1", use_container_width=True):
+        st.markdown("### 🚀 Start Live Trading")
+        st.markdown("Tell me your goal and account preferences — I'll set up your account to start trading")
+        if st.button("→", key="btn1", use_container_width=True):
             st.session_state.current_view = "trading"
             st.session_state.onboarding_step = 1
             st.rerun()
+    
     with col2:
-        if st.button("📚 Learn CFDs", key="btn2", use_container_width=True):
+        st.markdown("### 📚 Learn CFDs")
+        st.markdown("📖 Master the fundamentals")
+        st.markdown("📊 Try simple examples")
+        st.markdown("📈 Level up your skills")
+        if st.button("→", key="btn2", use_container_width=True):
             st.session_state.current_view = "cfds"
             st.rerun()
+    
     with col3:
-        if st.button("💬 Take a Tour", key="btn3", use_container_width=True):
+        st.markdown("### 💬 Take a Quick Tour")
+        st.markdown("A quick walkthrough of your dashboard, features and charts")
+        if st.button("→", key="btn3", use_container_width=True):
             st.session_state.current_view = "tour"
             st.rerun()
     
