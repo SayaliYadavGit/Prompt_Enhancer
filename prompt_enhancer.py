@@ -66,7 +66,7 @@ st.markdown("""
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid #e8e8e8;
-        margin: -80px -100px 40px -100px;
+        margin-bottom: 40px;
     }
     
     .hantec-logo {
@@ -146,11 +146,10 @@ st.markdown("""
         background: white;
         border: 1px solid #e8e8e8;
         padding: 28px;
-        min-height: 160px;
+        min-height: 180px;
         display: flex;
         flex-direction: column;
         transition: background 0.2s ease;
-        cursor: pointer;
     }
     
     .card-box:first-child {
@@ -315,6 +314,11 @@ st.markdown("""
         font-size: 0.9em;
     }
     
+    /* Hide default streamlit buttons */
+    .stButton button {
+        display: none;
+    }
+    
     @media (max-width: 1024px) {
         .main-cards {
             grid-template-columns: 1fr;
@@ -357,3 +361,349 @@ with st.sidebar:
     else:
         st.info("ℹ️ Required for chat")
         st.session_state.api_key_set = False
+
+# ========================================
+# TOP NAVIGATION
+# ========================================
+st.markdown("""
+    <div class="top-nav">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="hantec-logo">H</div>
+            <span style="color: #999; font-size: 0.9em;">Hantec Retail</span>
+            <span style="color: #999;">›</span>
+            <span style="color: #333; font-weight: 500; font-size: 0.9em;">Dashboard</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span style="font-size: 1.1em; color: #666;">🔍</span>
+            <span style="font-size: 1.1em; color: #666;">🔔</span>
+            <span class="nav-badge badge-lite">Lite</span>
+            <span class="nav-badge badge-pro">Pro</span>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+
+# ========================================
+# MAIN CONTENT
+# ========================================
+
+if st.session_state.current_view == "home":
+    # Welcome Section
+    st.markdown("""
+        <div class="welcome-section">
+            <div class="hantec-avatar">
+                <span class="avatar-h">H</span>
+            </div>
+            <h1 class="welcome-title">Welcome to Hantec One 👋</h1>
+            <p class="welcome-subtitle">Pick an option below to continue — or ask me anything to get started</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Main Action Cards
+    st.markdown("""
+        <div class="main-cards">
+            <div class="card-box" id="card-trading">
+                <div class="card-header">
+                    <span class="card-icon">🚀</span>
+                    <span class="card-title">Start Live Trading</span>
+                </div>
+                <div class="card-description">
+                    Tell me your goal and account preferences — I'll set up your account to start trading
+                </div>
+            </div>
+            
+            <div class="card-box" id="card-cfds">
+                <div class="card-header">
+                    <span class="card-icon">📚</span>
+                    <span class="card-title">Learn CFDs</span>
+                </div>
+                <div class="card-items">
+                    <div class="card-item">
+                        <span>📖</span>
+                        <span>Master the fundamentals</span>
+                    </div>
+                    <div class="card-item">
+                        <span>📊</span>
+                        <span>Try simple examples</span>
+                    </div>
+                    <div class="card-item">
+                        <span>📈</span>
+                        <span>Level up your skills</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-box" id="card-tour">
+                <div class="card-header">
+                    <span class="card-icon">💬</span>
+                    <span class="card-title">Take a Quick Tour</span>
+                </div>
+                <div class="card-description">
+                    A quick walkthrough of your dashboard, features and charts
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # JavaScript to handle card clicks
+    st.markdown("""
+        <script>
+        document.getElementById('card-trading')?.addEventListener('click', () => {
+            window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'trading'}, '*');
+        });
+        document.getElementById('card-cfds')?.addEventListener('click', () => {
+            window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'cfds'}, '*');
+        });
+        document.getElementById('card-tour')?.addEventListener('click', () => {
+            window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'tour'}, '*');
+        });
+        </script>
+    """, unsafe_allow_html=True)
+    
+    # Hidden buttons for navigation (Streamlit way)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🚀 Start Live Trading", key="btn1", use_container_width=True):
+            st.session_state.current_view = "trading"
+            st.session_state.onboarding_step = 1
+            st.rerun()
+    with col2:
+        if st.button("📚 Learn CFDs", key="btn2", use_container_width=True):
+            st.session_state.current_view = "cfds"
+            st.rerun()
+    with col3:
+        if st.button("💬 Take a Tour", key="btn3", use_container_width=True):
+            st.session_state.current_view = "tour"
+            st.rerun()
+    
+    # Chat Input
+    st.markdown('<div class="chat-input-area">', unsafe_allow_html=True)
+    if prompt := st.chat_input("Ask me anything...", disabled=not st.session_state.api_key_set):
+        st.session_state.current_view = "trading"
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Footer
+    st.markdown("""
+        <div class="page-footer">
+            All chats are private & encrypted. Hpulse may make mistakes — verify 
+            <a href="#">Key info ↗</a>
+        </div>
+    """, unsafe_allow_html=True)
+
+# ========================================
+# TRADING VIEW - CONVERSATIONAL FLOW
+# ========================================
+elif st.session_state.current_view == "trading":
+    
+    # Chat Header
+    st.markdown("""
+        <div class="chat-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span>▼</span>
+                <span style="font-weight: 600;">Getting started!</span>
+                <span class="section-badge">Current</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-weight: 500; font-size: 0.9em; color: #666;">Start Live Trading</span>
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: #e0e0e0;"></div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Chat Container
+    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    
+    # Initial greeting
+    if st.session_state.onboarding_step == 1 and not st.session_state.messages:
+        st.markdown("""
+            <div class="message-row">
+                <div class="message-avatar avatar-hantec">H</div>
+                <div class="message-content">
+                    <strong>Awesome! Let's get you started 💝</strong><br><br>
+                    Before we begin — can you tell me how familiar you are with trading? Pick one below
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([1.2, 1.5, 1.5])
+        with col1:
+            if st.button("I'm completely new", key="new", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": "I'm completely new"})
+                st.session_state.onboarding_step = 2
+                st.rerun()
+        with col2:
+            if st.button("I have some experience", key="some", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": "I have some experience"})
+                st.session_state.onboarding_step = 2
+                st.rerun()
+        with col3:
+            if st.button("I'm an experienced trader", key="exp", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": "I'm an experienced trader"})
+                st.session_state.onboarding_step = 2
+                st.rerun()
+    
+    # Display messages
+    for msg in st.session_state.messages:
+        if msg["role"] == "user":
+            st.markdown(f"""
+                <div class="message-row user-message-row">
+                    <div class="user-bubble">{msg["content"]}</div>
+                    <div class="message-avatar avatar-user"></div>
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+                <div class="message-row">
+                    <div class="message-avatar avatar-hantec">H</div>
+                    <div class="message-content">{msg["content"]}</div>
+                </div>
+            """, unsafe_allow_html=True)
+    
+    # Step 2: Response
+    if st.session_state.onboarding_step == 2 and len(st.session_state.messages) == 1:
+        st.markdown("""
+            <div class="message-row">
+                <div class="message-avatar avatar-hantec">H</div>
+                <div class="message-content">
+                    <strong>Perfect! I'll keep things simple and guide you all the way.</strong><br><br>
+                    I'll tailor things based on your experience, so you only see what matters most to you
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("Continue →", key="cont"):
+            st.session_state.messages.append({"role": "assistant", "content": "Perfect! I'll keep things simple and guide you all the way.<br><br>I'll tailor things based on your experience, so you only see what matters most to you"})
+            st.session_state.onboarding_step = 3
+            st.rerun()
+    
+    # Step 3: Done + next steps
+    if st.session_state.onboarding_step == 3 and len(st.session_state.messages) == 2:
+        st.markdown("""
+            <div class="message-row">
+                <div class="message-avatar avatar-hantec">H</div>
+                <div class="message-content">
+                    <div class="status-done">
+                        <span>✅</span>
+                        <span>Done</span>
+                    </div>
+                    <div>Now tell me what you'd like to do next</div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("Start live trading right away", key="opt1", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": "Start live trading right away"})
+                st.rerun()
+        with col2:
+            if st.button("Open a demo account", key="opt2", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": "Open a demo account and practice"})
+                st.rerun()
+        with col3:
+            if st.button("Try a product demo", key="opt3", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": "Try a quick product demo"})
+                st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Chat input
+    if prompt := st.chat_input("Ask me anything...", disabled=not st.session_state.api_key_set):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        if st.session_state.api_key_set:
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are Hantec One AI. Keep responses under 50 words. Be helpful and friendly."},
+                        *[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-5:]]
+                    ],
+                    temperature=0.7,
+                    max_tokens=100
+                )
+                answer = response.choices[0].message.content
+                st.session_state.messages.append({"role": "assistant", "content": answer})
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+    
+    st.markdown("""
+        <div class="page-footer">
+            All chats are private & encrypted. Hpulse may make mistakes — verify 
+            <a href="#">Key info ↗</a>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("← Back to Home"):
+        st.session_state.current_view = "home"
+        st.session_state.messages = []
+        st.session_state.onboarding_step = 0
+        st.rerun()
+
+# ========================================
+# LEARN CFDs VIEW
+# ========================================
+elif st.session_state.current_view == "cfds":
+    st.markdown("### 📚 Learn CFDs")
+    
+    if st.button("← Back to Home"):
+        st.session_state.current_view = "home"
+        st.rerun()
+    
+    st.markdown("---")
+    st.markdown("""
+    ## Master the Fundamentals
+    
+    ### What are CFDs?
+    Contracts for Difference (CFDs) allow you to trade on price movements without owning the underlying asset.
+    
+    ### Key Concepts
+    - **Leverage trading**: Control larger positions with smaller capital
+    - **Long and short positions**: Profit from rising or falling markets
+    - **Margin requirements**: Understand deposit requirements
+    - **Risk management**: Essential strategies for success
+    
+    ### Popular CFD Instruments
+    - Forex pairs (EUR/USD, GBP/USD)
+    - Indices (S&P 500, FTSE 100)
+    - Commodities (Gold, Oil)
+    - Cryptocurrencies (Bitcoin, Ethereum)
+    """)
+
+# ========================================
+# TAKE A TOUR VIEW
+# ========================================
+elif st.session_state.current_view == "tour":
+    st.markdown("### 💬 Take a Quick Tour")
+    
+    if st.button("← Back to Home"):
+        st.session_state.current_view = "home"
+        st.rerun()
+    
+    st.markdown("---")
+    st.markdown("""
+    ## Platform Walkthrough
+    
+    Learn about your dashboard, features, and trading tools.
+    
+    ### Dashboard Overview
+    - **Account balance and equity**: Track your funds in real-time
+    - **Open positions**: Monitor all active trades
+    - **Market watchlist**: Follow your favorite instruments
+    - **Trading history**: Review past performance
+    
+    ### Trading Platform Features
+    - Multiple chart types and timeframes
+    - 50+ technical indicators
+    - One-click trading
+    - Advanced order types (stop-loss, take-profit)
+    
+    ### Getting Started
+    1. Fund your account
+    2. Choose your instrument
+    3. Analyze the market
+    4. Place your trade
+    5. Monitor and manage positions
+    """)
