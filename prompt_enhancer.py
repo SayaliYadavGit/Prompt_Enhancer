@@ -314,9 +314,19 @@ st.markdown("""
         font-size: 0.9em;
     }
     
-    /* Hide default streamlit buttons */
-    .stButton button {
-        display: none;
+    /* Hide default streamlit buttons - better selector */
+    div[data-testid="column"] button {
+        opacity: 0;
+        position: absolute;
+        pointer-events: none;
+        height: 0;
+        width: 0;
+    }
+    
+    /* Make cards clickable */
+    .card-box {
+        cursor: pointer;
+        position: relative;
     }
     
     @media (max-width: 1024px) {
