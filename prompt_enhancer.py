@@ -282,9 +282,6 @@ if not st.session_state.conversation_started:
     col1, col2, col3 = st.columns(3, gap="medium")
     
     with col1:
-        # Make the entire card clickable using a container
-        card_clicked = st.button("card_1_invisible", key="btn_start_trading", label_visibility="collapsed", use_container_width=True)
-        
         st.markdown("""
             <div style="background: linear-gradient(135deg, #8B0000 0%, #B22222 100%); 
                         color: white; 
@@ -296,8 +293,7 @@ if not st.session_state.conversation_started:
                         flex-direction: column;
                         justify-content: space-between;
                         cursor: pointer;
-                        transition: all 0.2s;
-                        margin-top: -50px;">
+                        transition: all 0.2s;">
                 <div>
                     <div style="font-size: 40px; margin-bottom: 20px;">🚀</div>
                     <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; line-height: 1.3;">
@@ -311,7 +307,8 @@ if not st.session_state.conversation_started:
             </div>
         """, unsafe_allow_html=True)
         
-        if card_clicked:
+        # Button positioned below card but triggers card action
+        if st.button("🚀 Start Live Trading", key="btn_start_trading", use_container_width=True):
             st.session_state.selected_option = "start_trading"
             st.session_state.conversation_started = True
             # Add initial AI message
@@ -324,8 +321,6 @@ if not st.session_state.conversation_started:
             st.rerun()
     
     with col2:
-        card_clicked = st.button("card_2_invisible", key="btn_learn_cfds", label_visibility="collapsed", use_container_width=True)
-        
         st.markdown("""
             <div style="background: white; 
                         padding: 32px; 
@@ -337,8 +332,7 @@ if not st.session_state.conversation_started:
                         flex-direction: column;
                         justify-content: space-between;
                         cursor: pointer;
-                        transition: all 0.2s;
-                        margin-top: -50px;">
+                        transition: all 0.2s;">
                 <div>
                     <div style="font-size: 40px; margin-bottom: 20px;">📚</div>
                     <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1a202c; line-height: 1.3;">
@@ -354,7 +348,7 @@ if not st.session_state.conversation_started:
             </div>
         """, unsafe_allow_html=True)
         
-        if card_clicked:
+        if st.button("📚 Learn CFDs", key="btn_learn_cfds", use_container_width=True):
             st.session_state.selected_option = "learn_cfds"
             st.session_state.conversation_started = True
             st.session_state.chat_history = [
@@ -366,8 +360,6 @@ if not st.session_state.conversation_started:
             st.rerun()
     
     with col3:
-        card_clicked = st.button("card_3_invisible", key="btn_take_tour", label_visibility="collapsed", use_container_width=True)
-        
         st.markdown("""
             <div style="background: white; 
                         padding: 32px; 
@@ -379,8 +371,7 @@ if not st.session_state.conversation_started:
                         flex-direction: column;
                         justify-content: space-between;
                         cursor: pointer;
-                        transition: all 0.2s;
-                        margin-top: -50px;">
+                        transition: all 0.2s;">
                 <div>
                     <div style="font-size: 40px; margin-bottom: 20px;">💬</div>
                     <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1a202c; line-height: 1.3;">
@@ -394,7 +385,7 @@ if not st.session_state.conversation_started:
             </div>
         """, unsafe_allow_html=True)
         
-        if card_clicked:
+        if st.button("💬 Take a Quick Tour", key="btn_take_tour", use_container_width=True):
             st.session_state.selected_option = "take_tour"
             st.session_state.conversation_started = True
             st.session_state.chat_history = [
