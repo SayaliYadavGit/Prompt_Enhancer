@@ -282,7 +282,36 @@ if not st.session_state.conversation_started:
     col1, col2, col3 = st.columns(3, gap="medium")
     
     with col1:
-        if st.button("🚀 Start Live Trading", key="btn_start_trading", use_container_width=True):
+        # Make the entire card clickable using a container
+        card_clicked = st.button("card_1_invisible", key="btn_start_trading", label_visibility="collapsed", use_container_width=True)
+        
+        st.markdown("""
+            <div style="background: linear-gradient(135deg, #8B0000 0%, #B22222 100%); 
+                        color: white; 
+                        padding: 32px; 
+                        border-radius: 16px; 
+                        min-height: 280px;
+                        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        margin-top: -50px;">
+                <div>
+                    <div style="font-size: 40px; margin-bottom: 20px;">🚀</div>
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; line-height: 1.3;">
+                        Start Live Trading
+                    </div>
+                    <div style="font-size: 15px; line-height: 1.6; opacity: 0.95;">
+                        Tell me your goal and account preferences — I'll set up your account to start trading
+                    </div>
+                </div>
+                <div style="text-align: right; font-size: 32px; opacity: 0.8; margin-top: 20px;">→</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        if card_clicked:
             st.session_state.selected_option = "start_trading"
             st.session_state.conversation_started = True
             # Add initial AI message
@@ -293,34 +322,39 @@ if not st.session_state.conversation_started:
                 }
             ]
             st.rerun()
+    
+    with col2:
+        card_clicked = st.button("card_2_invisible", key="btn_learn_cfds", label_visibility="collapsed", use_container_width=True)
         
         st.markdown("""
-            <div style="background: linear-gradient(135deg, #8B0000 0%, #B22222 100%); 
-                        color: white; 
+            <div style="background: white; 
                         padding: 32px; 
                         border-radius: 16px; 
-                        height: 240px;
-                        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
+                        min-height: 280px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                        border: 1px solid #e2e8f0;
                         display: flex;
                         flex-direction: column;
                         justify-content: space-between;
                         cursor: pointer;
-                        transition: transform 0.2s;">
+                        transition: all 0.2s;
+                        margin-top: -50px;">
                 <div>
-                    <div style="font-size: 28px; margin-bottom: 16px;">🚀</div>
-                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 14px; line-height: 1.3;">
-                        Start Live Trading
+                    <div style="font-size: 40px; margin-bottom: 20px;">📚</div>
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1a202c; line-height: 1.3;">
+                        Learn CFDs
                     </div>
-                    <div style="font-size: 15px; line-height: 1.6; opacity: 0.95;">
-                        Tell me your goal and account preferences — I'll set up your account to start trading
+                    <div style="font-size: 15px; color: #64748b; line-height: 2;">
+                        📊 Master the fundamentals<br>
+                        📈 Try simple examples<br>
+                        📉 Level up your skills
                     </div>
                 </div>
-                <div style="text-align: right; font-size: 28px; opacity: 0.7;">→</div>
+                <div style="text-align: right; font-size: 32px; color: #cbd5e0; margin-top: 20px;">→</div>
             </div>
         """, unsafe_allow_html=True)
-    
-    with col2:
-        if st.button("📚 Learn CFDs", key="btn_learn_cfds", use_container_width=True):
+        
+        if card_clicked:
             st.session_state.selected_option = "learn_cfds"
             st.session_state.conversation_started = True
             st.session_state.chat_history = [
@@ -330,36 +364,37 @@ if not st.session_state.conversation_started:
                 }
             ]
             st.rerun()
+    
+    with col3:
+        card_clicked = st.button("card_3_invisible", key="btn_take_tour", label_visibility="collapsed", use_container_width=True)
         
         st.markdown("""
             <div style="background: white; 
                         padding: 32px; 
                         border-radius: 16px; 
-                        height: 240px;
+                        min-height: 280px;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
                         border: 1px solid #e2e8f0;
                         display: flex;
                         flex-direction: column;
                         justify-content: space-between;
                         cursor: pointer;
-                        transition: transform 0.2s;">
+                        transition: all 0.2s;
+                        margin-top: -50px;">
                 <div>
-                    <div style="font-size: 28px; margin-bottom: 16px;">📚</div>
-                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 18px; color: #1a202c; line-height: 1.3;">
-                        Learn CFDs
+                    <div style="font-size: 40px; margin-bottom: 20px;">💬</div>
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1a202c; line-height: 1.3;">
+                        Take a Quick Tour
                     </div>
-                    <div style="font-size: 15px; color: #64748b; line-height: 2;">
-                        📊 Master the fundamentals<br>
-                        📈 Try simple examples<br>
-                        📉 Level up your skills
+                    <div style="font-size: 15px; color: #64748b; line-height: 1.6;">
+                        A quick walkthrough of your dashboard, features and charts
                     </div>
                 </div>
-                <div style="text-align: right; font-size: 28px; color: #cbd5e0;">→</div>
+                <div style="text-align: right; font-size: 32px; color: #cbd5e0; margin-top: 20px;">→</div>
             </div>
         """, unsafe_allow_html=True)
-    
-    with col3:
-        if st.button("💬 Take a Quick Tour", key="btn_take_tour", use_container_width=True):
+        
+        if card_clicked:
             st.session_state.selected_option = "take_tour"
             st.session_state.conversation_started = True
             st.session_state.chat_history = [
@@ -369,31 +404,6 @@ if not st.session_state.conversation_started:
                 }
             ]
             st.rerun()
-        
-        st.markdown("""
-            <div style="background: white; 
-                        padding: 32px; 
-                        border-radius: 16px; 
-                        height: 240px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        border: 1px solid #e2e8f0;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: space-between;
-                        cursor: pointer;
-                        transition: transform 0.2s;">
-                <div>
-                    <div style="font-size: 28px; margin-bottom: 16px;">💬</div>
-                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 14px; color: #1a202c; line-height: 1.3;">
-                        Take a Quick Tour
-                    </div>
-                    <div style="font-size: 15px; color: #64748b; line-height: 1.6;">
-                        A quick walkthrough of your dashboard, features and charts
-                    </div>
-                </div>
-                <div style="text-align: right; font-size: 28px; color: #cbd5e0;">→</div>
-            </div>
-        """, unsafe_allow_html=True)
     
     # Chat input on welcome screen
     st.markdown("<br><br>", unsafe_allow_html=True)
