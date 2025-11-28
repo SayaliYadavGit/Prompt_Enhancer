@@ -282,26 +282,7 @@ if not st.session_state.conversation_started:
     col1, col2, col3 = st.columns(3, gap="medium")
     
     with col1:
-        st.markdown("""
-            <div style="background: linear-gradient(135deg, #8B0000 0%, #B22222 100%); 
-                        color: white; 
-                        padding: 32px; 
-                        border-radius: 16px; 
-                        min-height: 220px;
-                        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
-                        position: relative;">
-                <div style="font-size: 28px; margin-bottom: 16px;">🚀</div>
-                <div style="font-size: 22px; font-weight: 600; margin-bottom: 14px; line-height: 1.3;">
-                    Start Live Trading
-                </div>
-                <div style="font-size: 15px; line-height: 1.6; opacity: 0.95; margin-bottom: 20px;">
-                    Tell me your goal and account preferences — I'll set up your account to start trading
-                </div>
-                <div style="text-align: right; font-size: 28px; opacity: 0.7;">→</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("Select", key="btn_start_trading", use_container_width=True):
+        if st.button("🚀 Start Live Trading", key="btn_start_trading", use_container_width=True):
             st.session_state.selected_option = "start_trading"
             st.session_state.conversation_started = True
             # Add initial AI message
@@ -312,29 +293,34 @@ if not st.session_state.conversation_started:
                 }
             ]
             st.rerun()
-    
-    with col2:
+        
         st.markdown("""
-            <div style="background: white; 
+            <div style="background: linear-gradient(135deg, #8B0000 0%, #B22222 100%); 
+                        color: white; 
                         padding: 32px; 
                         border-radius: 16px; 
-                        min-height: 220px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        border: 1px solid #e2e8f0;">
-                <div style="font-size: 28px; margin-bottom: 16px;">📚</div>
-                <div style="font-size: 22px; font-weight: 600; margin-bottom: 18px; color: #1a202c; line-height: 1.3;">
-                    Learn CFDs
+                        height: 240px;
+                        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        cursor: pointer;
+                        transition: transform 0.2s;">
+                <div>
+                    <div style="font-size: 28px; margin-bottom: 16px;">🚀</div>
+                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 14px; line-height: 1.3;">
+                        Start Live Trading
+                    </div>
+                    <div style="font-size: 15px; line-height: 1.6; opacity: 0.95;">
+                        Tell me your goal and account preferences — I'll set up your account to start trading
+                    </div>
                 </div>
-                <div style="font-size: 15px; color: #64748b; line-height: 2;">
-                    📊 Master the fundamentals<br>
-                    📈 Try simple examples<br>
-                    📉 Level up your skills
-                </div>
-                <div style="text-align: right; margin-top: 16px; font-size: 28px; color: #cbd5e0;">→</div>
+                <div style="text-align: right; font-size: 28px; opacity: 0.7;">→</div>
             </div>
         """, unsafe_allow_html=True)
-        
-        if st.button("Select", key="btn_learn_cfds", use_container_width=True):
+    
+    with col2:
+        if st.button("📚 Learn CFDs", key="btn_learn_cfds", use_container_width=True):
             st.session_state.selected_option = "learn_cfds"
             st.session_state.conversation_started = True
             st.session_state.chat_history = [
@@ -344,27 +330,36 @@ if not st.session_state.conversation_started:
                 }
             ]
             st.rerun()
-    
-    with col3:
+        
         st.markdown("""
             <div style="background: white; 
                         padding: 32px; 
                         border-radius: 16px; 
-                        min-height: 220px;
+                        height: 240px;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        border: 1px solid #e2e8f0;">
-                <div style="font-size: 28px; margin-bottom: 16px;">💬</div>
-                <div style="font-size: 22px; font-weight: 600; margin-bottom: 14px; color: #1a202c; line-height: 1.3;">
-                    Take a Quick Tour
-                </div>
-                <div style="font-size: 15px; color: #64748b; line-height: 1.6; margin-bottom: 20px;">
-                    A quick walkthrough of your dashboard, features and charts
+                        border: 1px solid #e2e8f0;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        cursor: pointer;
+                        transition: transform 0.2s;">
+                <div>
+                    <div style="font-size: 28px; margin-bottom: 16px;">📚</div>
+                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 18px; color: #1a202c; line-height: 1.3;">
+                        Learn CFDs
+                    </div>
+                    <div style="font-size: 15px; color: #64748b; line-height: 2;">
+                        📊 Master the fundamentals<br>
+                        📈 Try simple examples<br>
+                        📉 Level up your skills
+                    </div>
                 </div>
                 <div style="text-align: right; font-size: 28px; color: #cbd5e0;">→</div>
             </div>
         """, unsafe_allow_html=True)
-        
-        if st.button("Select", key="btn_take_tour", use_container_width=True):
+    
+    with col3:
+        if st.button("💬 Take a Quick Tour", key="btn_take_tour", use_container_width=True):
             st.session_state.selected_option = "take_tour"
             st.session_state.conversation_started = True
             st.session_state.chat_history = [
@@ -374,6 +369,31 @@ if not st.session_state.conversation_started:
                 }
             ]
             st.rerun()
+        
+        st.markdown("""
+            <div style="background: white; 
+                        padding: 32px; 
+                        border-radius: 16px; 
+                        height: 240px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                        border: 1px solid #e2e8f0;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        cursor: pointer;
+                        transition: transform 0.2s;">
+                <div>
+                    <div style="font-size: 28px; margin-bottom: 16px;">💬</div>
+                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 14px; color: #1a202c; line-height: 1.3;">
+                        Take a Quick Tour
+                    </div>
+                    <div style="font-size: 15px; color: #64748b; line-height: 1.6;">
+                        A quick walkthrough of your dashboard, features and charts
+                    </div>
+                </div>
+                <div style="text-align: right; font-size: 28px; color: #cbd5e0;">→</div>
+            </div>
+        """, unsafe_allow_html=True)
     
     # Chat input on welcome screen
     st.markdown("<br><br>", unsafe_allow_html=True)
