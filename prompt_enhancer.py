@@ -203,10 +203,10 @@ with st.sidebar:
     st.markdown("---")
     
     st.markdown("### 📚 Quick Links")
-    st.markdown("- [Trading Guide](https://hantec.com/guide)")
-    st.markdown("- [Risk Disclosure](https://hantec.com/risk)")
-    st.markdown("- [Support Center](https://hantec.com/support)")
-    st.markdown("- [Terms & Conditions](https://hantec.com/terms)")
+    st.markdown("- [Trading Guide](https://hmarkets.com/guide)")
+    st.markdown("- [Risk Disclosure](https://hmarkets.com/risk)")
+    st.markdown("- [Support Center](https://hmarkets.com/support)")
+    st.markdown("- [Terms & Conditions](https://hmarkets.com/terms)")
 
 # Initialize session state
 if 'conversation_started' not in st.session_state:
@@ -245,7 +245,8 @@ RESPONSE STRUCTURE:
 - Use bullet points when listing items
 - Use **bold** for emphasis
 - Include ⚠️ for warnings
-- Add links with [Link text →]
+- When providing links, always use hmarkets.com domain (e.g., [Trading Guide → https://hmarkets.com/guide])
+- NEVER reference hantecmarkets.com - always use hmarkets.com
 
 PERSONALITY:
 - Knowledgeable but humble
@@ -262,8 +263,10 @@ BEHAVIOR:
 - For onboarding users: Guide through incomplete steps
 - For active traders: Provide market insights and platform help
 - Celebrate milestones: "Great job completing KYC! 🎉"
+- When referencing company website or resources, ALWAYS use hmarkets.com (NOT hantecmarkets.com)
 
-Remember: You're a mentor, not a financial advisor. Keep it conversational, helpful, and compliant."""
+Remember: You're a mentor, not a financial advisor. Keep it conversational, helpful, and compliant.
+Company website: hmarkets.com"""
 
 # MAIN CONTENT LOGIC
 # Show welcome screen OR conversation interface
