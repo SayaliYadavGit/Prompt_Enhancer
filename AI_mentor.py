@@ -1,7 +1,17 @@
+"""
+Hantec AI Mentor - Clean RAG Implementation
+Add your own knowledge files to data/knowledge_base/
+Supports: .txt, .md, .json, .pdf (text), .docx
+"""
+
 from openai import OpenAI
 import streamlit as st
 import json
 from datetime import datetime
+import chromadb
+from chromadb.config import Settings
+import os
+import glob
 
 # Page configuration
 st.set_page_config(
@@ -10,85 +20,231 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS matching both UIs
+# ============================================================================
+# RAG SYSTEM - LOAD FROM YOUR FILES
+# ============================================================================
+
+class HantecRAG:
+    def __init__(self, knowledge_base_path="data/knowledge_base"):
+        """
+        Initialize ChromaDB and load knowledge from your files
+        
+        Supported file formats:
+        - .txt - Plain text files
+        - .md - Markdown files
+        - .json - JSON files (will extract all text)
+        """
+        self.knowledge_base_path = knowledge_base_path
+        
+        # Create directory if it doesn't exist
+        os.makedirs(knowledge_base_path, exist_ok=True)
+        
+        # Initialize ChromaDB
+        self.client = chromadb.Client(Settings(
+            anonymized_telemetry=False,
+            allow_reset=True
+        ))
+        
+        # Create or get collection
+        try:
+            self.collection = self.client.get_collection(name="hantec_knowledge")
+        except:
+            self.collection = self.client.create_collection(
+                name="hantec_knowledge",
+                metadata={"description": "Hantec Markets knowledge base from your files"}
+            )
+        
+        # Load all knowledge files
+        self.load_knowledge_base()
+    
+    def load_knowledge_base(self):
+        """Load all files from knowledge_base folder"""
+        
+        # Get all supported files
+        txt_files = glob.glob(f"{self.knowledge_base_path}/**/*.txt", recursive=True)
+        md_files = glob.glob(f"{self.knowledge_base_path}/**/*.md", recursive=True)
+        json_files = glob.glob(f"{self.knowledge_base_path}/**/*.json", recursive=True)
+        
+        all_files = txt_files + md_files + json_files
+        
+        if not all_files:
+            st.sidebar.warning(f"⚠️ No knowledge files found in {self.knowledge_base_path}")
+            st.sidebar.info("📝 Add .txt, .md, or .json files to start!")
+            return
+        
+        documents = []
+        metadatas = []
+        ids = []
+        
+        for file_path in all_files:
+            try:
+                # Read file content
+                content = self._read_file(file_path)
+                
+                if content and content.strip():
+                    # Extract file info
+                    filename = os.path.basename(file_path)
+                    file_ext = os.path.splitext(filename)[1]
+                    category = os.path.basename(os.path.dirname(file_path))
+                    
+                    # Add to ChromaDB
+                    documents.append(content)
+                    metadatas.append({
+                        "filename": filename,
+                        "category": category,
+                        "type": file_ext[1:]  # Remove the dot
+                    })
+                    ids.append(f"{category}_{filename}_{len(documents)}")
+                    
+            except Exception as e:
+                st.sidebar.error(f"Error loading {file_path}: {str(e)}")
+        
+        # Add all documents to collection
+        if documents:
+            try:
+                # Clear existing collection
+                self.client.delete_collection("hantec_knowledge")
+                self.collection = self.client.create_collection(
+                    name="hantec_knowledge",
+                    metadata={"description": "Hantec Markets knowledge base from your files"}
+                )
+                
+                # Add new documents
+                self.collection.add(
+                    documents=documents,
+                    metadatas=metadatas,
+                    ids=ids
+                )
+                st.sidebar.success(f"✅ Loaded {len(documents)} documents from {len(all_files)} files")
+            except Exception as e:
+                st.sidebar.error(f"Error adding to ChromaDB: {str(e)}")
+        else:
+            st.sidebar.warning("⚠️ No valid content found in files")
+    
+    def _read_file(self, file_path):
+        """Read content from different file types"""
+        file_ext = os.path.splitext(file_path)[1].lower()
+        
+        if file_ext in ['.txt', '.md']:
+            # Read text/markdown files
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        
+        elif file_ext == '.json':
+            # Read JSON and convert to text
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                # Convert JSON to readable text
+                return json.dumps(data, indent=2)
+        
+        return ""
+    
+    def retrieve(self, query, n_results=3):
+        """Retrieve relevant documents from knowledge base"""
+        try:
+            results = self.collection.query(
+                query_texts=[query],
+                n_results=n_results
+            )
+            
+            if results['documents'] and results['documents'][0]:
+                # Combine retrieved documents
+                retrieved_text = "\n\n---\n\n".join(results['documents'][0])
+                
+                # Add source information
+                sources = []
+                if results['metadatas'] and results['metadatas'][0]:
+                    for meta in results['metadatas'][0]:
+                        sources.append(f"{meta.get('category', 'unknown')}/{meta.get('filename', 'unknown')}")
+                
+                return retrieved_text, sources
+            
+            return "", []
+        except Exception as e:
+            st.sidebar.error(f"Retrieval error: {str(e)}")
+            return "", []
+
+# Initialize RAG system
+@st.cache_resource
+def get_rag_system():
+    return HantecRAG()
+
+# ============================================================================
+# CC-SC-R FRAMEWORK
+# ============================================================================
+
+def build_system_prompt(user_context, retrieved_knowledge, sources):
+    """Build complete system prompt with CC-SC-R framework"""
+    
+    # Add source attribution if available
+    source_info = ""
+    if sources:
+        source_info = f"\n\nSOURCES: {', '.join(sources)}"
+    
+    return f"""You are the Hantec Markets AI Mentor, a conversational assistant guiding users through CFD trading.
+
+USER CONTEXT:
+- Name: {user_context.get('name', 'User')}
+- State: {user_context.get('state', 'unknown')}
+- Onboarding Step: {user_context.get('step', 0)}/9
+- Language: {user_context.get('language', 'English')}
+
+CRITICAL CONSTRAINTS:
+- NEVER mention guaranteed returns or promise profits
+- NO financial advice - education only
+- ALWAYS include risk disclaimers for trading queries
+- NO storage or repetition of PII
+- All responses must be FSC (Mauritius) compliant
+
+RESPONSE STRUCTURE:
+- Keep answers SHORT and PRECISE (2-4 sentences maximum)
+- Use bullet points for lists
+- Use **bold** for emphasis
+- Include ⚠️ emoji for warnings
+- When providing links, ALWAYS use hmarkets.com domain
+- Use friendly, conversational tone
+
+HANTEC KNOWLEDGE BASE:
+{retrieved_knowledge if retrieved_knowledge else "No specific knowledge found - provide general guidance and suggest contacting support for details."}
+{source_info}
+
+MANDATORY DISCLAIMERS:
+- For trading queries: "⚠️ Trading involves risk. This is for educational purposes only."
+- For leverage: "Leverage magnifies both gains and losses"
+- If unsure: Redirect to support@hmarkets.com or live chat
+
+PERSONALITY:
+- Knowledgeable but humble
+- Empowering and motivational
+- Transparent about limitations
+- Patient, never condescending
+
+Company website: hmarkets.com
+Support: support@hmarkets.com | Live chat 24/5
+
+Remember: You're a mentor, not a financial advisor. Keep it conversational, helpful, and compliant.
+"""
+
+# ============================================================================
+# STREAMLIT UI
+# ============================================================================
+
+# Custom CSS (keeping it minimal)
 st.markdown("""
     <style>
-    /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
-    /* Global styles */
-    * {
-        font-family: 'Inter', sans-serif;
-    }
+    * { font-family: 'Inter', sans-serif; }
+    .main { background-color: #fafafa; }
+    #MainMenu, footer, header { visibility: hidden; }
     
-    .main {
-        background-color: #fafafa;
-        padding: 0;
-    }
-    
-    .block-container {
-        padding-top: 1rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
-    }
-    
-    /* Hide default streamlit elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    /* Thread header */
-    .thread-header {
-        background: white;
-        padding: 16px 24px;
-        border-radius: 12px;
-        margin-bottom: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    
-    .thread-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1a202c;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
-    .thread-badge {
-        background: #fee;
-        color: #c53030;
-        padding: 4px 12px;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 500;
-    }
-    
-    .thread-close {
-        color: #718096;
-        cursor: pointer;
-        font-size: 20px;
-    }
-    
-    /* Chat input */
     .stTextInput > div > div > input {
         border-radius: 16px;
         padding: 18px 24px;
         border: 1px solid #e2e8f0;
         font-size: 15px;
-        transition: all 0.3s ease;
-        background-color: white;
     }
     
-    .stTextInput > div > div > input:focus {
-        border-color: #8B0000;
-        box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
-    }
-    
-    /* Welcome screen styles */
     .welcome-section {
         text-align: center;
         padding: 60px 20px 50px 20px;
@@ -115,50 +271,15 @@ st.markdown("""
         font-weight: 600;
         color: #1a202c;
         margin-bottom: 16px;
-        line-height: 1.2;
     }
     
-    .name-highlight {
-        color: #8B0000;
-    }
+    .name-highlight { color: #8B0000; }
     
     .welcome-subtitle {
         font-size: 17px;
         color: #64748b;
         margin-bottom: 50px;
-        font-weight: 400;
     }
-    
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #f8fafc;
-        border-right: 1px solid #e2e8f0;
-    }
-    
-    section[data-testid="stSidebar"] > div {
-        padding-top: 2rem;
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.2s;
-    }
-    
-    /* Disclaimer */
-    .chat-disclaimer {
-        text-align: center;
-        font-size: 13px;
-        color: #94a3b8;
-        margin-top: 16px;
-    }
-    
-    .chat-disclaimer a {
-        color: #3b82f6;
-        text-decoration: none;
-    }
-    
     </style>
 """, unsafe_allow_html=True)
 
@@ -182,31 +303,36 @@ with st.sidebar:
     st.markdown("### 👤 User Settings")
     user_name = st.text_input("Your Name", value="James", key="user_name")
     user_language = st.selectbox(
-        "Preferred Language",
+        "Language",
         ["English", "Spanish", "Portuguese", "Chinese", "Japanese", "Korean", "Thai"],
         key="language"
     )
     
     st.markdown("---")
     
-    st.markdown("### 🎯 Current Session")
-    if 'conversation_started' in st.session_state and st.session_state.conversation_started:
-        st.info("Chat in progress")
-        if st.button("← Back to Welcome"):
-            st.session_state.conversation_started = False
-            st.session_state.selected_option = None
-            st.session_state.last_processed_message = ""
-            st.rerun()
-    else:
-        st.caption("No active conversation")
+    st.markdown("### 📚 Knowledge Base")
+    st.info("Add files to: `data/knowledge_base/`")
+    
+    # Show current status
+    if os.path.exists("data/knowledge_base"):
+        files = glob.glob("data/knowledge_base/**/*.*", recursive=True)
+        st.caption(f"📁 {len([f for f in files if os.path.isfile(f)])} files found")
+    
+    if st.button("🔄 Reload Knowledge Base"):
+        st.cache_resource.clear()
+        st.rerun()
+    
+    st.markdown("---")
+    
+    st.markdown("### ⚙️ AI Settings")
+    st.caption("Temperature: 0.1 (consistent)")
+    st.caption("Max Tokens: 500 (concise)")
     
     st.markdown("---")
     
     st.markdown("### 📚 Quick Links")
     st.markdown("- [Trading Guide](https://hmarkets.com/guide)")
-    st.markdown("- [Risk Disclosure](https://hmarkets.com/risk)")
-    st.markdown("- [Support Center](https://hmarkets.com/support)")
-    st.markdown("- [Terms & Conditions](https://hmarkets.com/terms)")
+    st.markdown("- [Support](https://hmarkets.com/support)")
 
 # Initialize session state
 if 'conversation_started' not in st.session_state:
@@ -222,54 +348,10 @@ if 'onboarding_step' not in st.session_state:
 if 'last_processed_message' not in st.session_state:
     st.session_state.last_processed_message = ""
 
-# Function to get system prompt with CC-SC-R framework
-def get_system_prompt(user_context):
-    return f"""You are the Hantec Markets AI Mentor, a conversational assistant guiding users through CFD trading.
+# Initialize RAG
+rag_system = get_rag_system()
 
-USER CONTEXT:
-- User State: {user_context['state']}
-- Onboarding Step: {user_context['step']}/9
-- Language: {user_context['language']}
-- Name: {user_context['name']}
-- Selected Path: {user_context.get('path', 'General')}
-
-CRITICAL CONSTRAINTS:
-- NEVER mention guaranteed returns
-- NO financial advice (education only)
-- ALWAYS include risk disclaimers for trading queries
-- NO PII storage or repetition
-- FSC (Mauritius) compliant responses only
-
-RESPONSE STRUCTURE:
-- Keep answers SHORT (2-4 sentences max)
-- Use bullet points when listing items
-- Use **bold** for emphasis
-- Include ⚠️ for warnings
-- When providing links, always use hmarkets.com domain (e.g., [Trading Guide → https://hmarkets.com/guide])
-- NEVER reference hantecmarkets.com - always use hmarkets.com
-
-PERSONALITY:
-- Knowledgeable but humble
-- Empowering and motivational
-- Transparent about limitations
-- Patient, never condescending
-- Conversational and friendly
-
-MANDATORY DISCLAIMERS:
-For trading queries: "⚠️ Trading involves risk. This is for educational purposes only."
-
-BEHAVIOR:
-- If unclear query: "I didn't understand. Can we try this again?"
-- For onboarding users: Guide through incomplete steps
-- For active traders: Provide market insights and platform help
-- Celebrate milestones: "Great job completing KYC! 🎉"
-- When referencing company website or resources, ALWAYS use hmarkets.com (NOT hantecmarkets.com)
-
-Remember: You're a mentor, not a financial advisor. Keep it conversational, helpful, and compliant.
-Company website: hmarkets.com"""
-
-# MAIN CONTENT LOGIC
-# Show welcome screen OR conversation interface
+# MAIN CONTENT
 if not st.session_state.conversation_started:
     # ==================== WELCOME SCREEN ====================
     
@@ -287,19 +369,12 @@ if not st.session_state.conversation_started:
     with col1:
         st.markdown("""
             <div style="background: linear-gradient(135deg, #8B0000 0%, #B22222 100%); 
-                        color: white; 
-                        padding: 32px; 
-                        border-radius: 16px; 
-                        min-height: 280px;
-                        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: space-between;
-                        cursor: pointer;
-                        transition: all 0.2s;">
+                        color: white; padding: 32px; border-radius: 16px; min-height: 280px;
+                        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2); display: flex;
+                        flex-direction: column; justify-content: space-between;">
                 <div>
                     <div style="font-size: 40px; margin-bottom: 20px;">🚀</div>
-                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; line-height: 1.3;">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">
                         Start Live Trading
                     </div>
                     <div style="font-size: 15px; line-height: 1.6; opacity: 0.95;">
@@ -310,35 +385,23 @@ if not st.session_state.conversation_started:
             </div>
         """, unsafe_allow_html=True)
         
-        # Button positioned below card but triggers card action
         if st.button("🚀 Start Live Trading", key="btn_start_trading", use_container_width=True):
             st.session_state.selected_option = "start_trading"
             st.session_state.conversation_started = True
-            # Add initial AI message
-            st.session_state.chat_history = [
-                {
-                    "role": "assistant", 
-                    "content": f"Awesome, {user_name}! Let's get you started 💝\n\nBefore we begin — can you tell me how familiar you are with trading? Pick one below"
-                }
-            ]
+            st.session_state.chat_history = [{
+                "role": "assistant", 
+                "content": f"Awesome, {user_name}! Let's get you started 💝\n\nBefore we begin — can you tell me how familiar you are with trading?"
+            }]
             st.rerun()
     
     with col2:
         st.markdown("""
-            <div style="background: white; 
-                        padding: 32px; 
-                        border-radius: 16px; 
-                        min-height: 280px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        border: 1px solid #e2e8f0;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: space-between;
-                        cursor: pointer;
-                        transition: all 0.2s;">
+            <div style="background: white; padding: 32px; border-radius: 16px; min-height: 280px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+                        display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
                     <div style="font-size: 40px; margin-bottom: 20px;">📚</div>
-                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1a202c; line-height: 1.3;">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1a202c;">
                         Learn CFDs
                     </div>
                     <div style="font-size: 15px; color: #64748b; line-height: 2;">
@@ -354,30 +417,20 @@ if not st.session_state.conversation_started:
         if st.button("📚 Learn CFDs", key="btn_learn_cfds", use_container_width=True):
             st.session_state.selected_option = "learn_cfds"
             st.session_state.conversation_started = True
-            st.session_state.chat_history = [
-                {
-                    "role": "assistant",
-                    "content": f"Great choice, {user_name}! Let's build your trading knowledge 📚\n\nWhat's your current experience level with CFD trading?"
-                }
-            ]
+            st.session_state.chat_history = [{
+                "role": "assistant",
+                "content": f"Great choice, {user_name}! Let's build your trading knowledge 📚\n\nWhat would you like to learn about?"
+            }]
             st.rerun()
     
     with col3:
         st.markdown("""
-            <div style="background: white; 
-                        padding: 32px; 
-                        border-radius: 16px; 
-                        min-height: 280px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        border: 1px solid #e2e8f0;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: space-between;
-                        cursor: pointer;
-                        transition: all 0.2s;">
+            <div style="background: white; padding: 32px; border-radius: 16px; min-height: 280px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+                        display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
                     <div style="font-size: 40px; margin-bottom: 20px;">💬</div>
-                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1a202c; line-height: 1.3;">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1a202c;">
                         Take a Quick Tour
                     </div>
                     <div style="font-size: 15px; color: #64748b; line-height: 1.6;">
@@ -391,15 +444,13 @@ if not st.session_state.conversation_started:
         if st.button("💬 Take a Quick Tour", key="btn_take_tour", use_container_width=True):
             st.session_state.selected_option = "take_tour"
             st.session_state.conversation_started = True
-            st.session_state.chat_history = [
-                {
-                    "role": "assistant",
-                    "content": f"Perfect, {user_name}! I'll show you around 🗺️\n\nLet me give you a tour of your Hantec dashboard. Where would you like to start?"
-                }
-            ]
+            st.session_state.chat_history = [{
+                "role": "assistant",
+                "content": f"Perfect, {user_name}! I'll show you around 🗺️\n\nWhat would you like to explore first?"
+            }]
             st.rerun()
     
-    # Chat input on welcome screen
+    # Chat input
     st.markdown("<br><br>", unsafe_allow_html=True)
     
     col_input, col_mic = st.columns([20, 1])
@@ -415,65 +466,24 @@ if not st.session_state.conversation_started:
     
     if welcome_input and welcome_input != st.session_state.last_processed_message:
         if not api_key:
-            st.error("❌ Please enter your OpenAI API key in the sidebar to chat", icon="🔒")
+            st.error("❌ Please enter your OpenAI API key in the sidebar", icon="🔒")
         else:
-            # Mark as processing
             st.session_state.last_processed_message = welcome_input
             st.session_state.conversation_started = True
             st.session_state.selected_option = "general"
-            
-            # Add user message
-            st.session_state.chat_history = [
-                {"role": "user", "content": welcome_input}
-            ]
-            
-            # Generate AI response
-            try:
-                client = OpenAI(api_key=api_key)
-                
-                user_context = {
-                    'state': st.session_state.user_state,
-                    'step': st.session_state.onboarding_step,
-                    'language': user_language,
-                    'name': user_name,
-                    'path': 'general'
-                }
-                
-                system_prompt = get_system_prompt(user_context)
-                
-                with st.spinner("🤖 AI Mentor is thinking..."):
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": welcome_input}
-                        ],
-                        temperature=0.7,
-                        max_tokens=400
-                    )
-                    
-                    assistant_response = response.choices[0].message.content
-                    
-                    
-                    st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-                
-                st.rerun()
-            
-            except Exception as e:
-                st.error(f"❌ Error: {str(e)}", icon="⚠️")
-                st.session_state.conversation_started = False
+            st.session_state.chat_history = [{"role": "user", "content": welcome_input}]
+            st.rerun()
     
     st.markdown("""
-        <div class="chat-disclaimer">
+        <div style="text-align: center; margin-top: 16px; font-size: 13px; color: #94a3b8;">
             All chats are private & encrypted. Hpulse may make mistakes — verify 
-            <a href="#" target="_blank">Key Info ↗</a>
+            <a href="https://hmarkets.com/risk" style="color: #3b82f6; text-decoration: none;">Key Info ↗</a>
         </div>
     """, unsafe_allow_html=True)
 
 else:
     # ==================== CONVERSATION INTERFACE ====================
     
-    # Thread header
     thread_titles = {
         "start_trading": "Start Live Trading",
         "learn_cfds": "Learn CFDs",
@@ -483,31 +493,11 @@ else:
     
     thread_title = thread_titles.get(st.session_state.selected_option, "Chat")
     
-    col_header, col_close = st.columns([10, 1])
-    with col_header:
-        st.markdown(f"""
-            <div class="thread-header">
-                <div class="thread-title">
-                    <span>▼</span>
-                    <span>{thread_title}</span>
-                    <span class="thread-badge">Current</span>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    with col_close:
-        if st.button("✕", key="close_thread"):
-            st.session_state.conversation_started = False
-            st.session_state.chat_history = []
-            st.session_state.last_processed_message = ""
-            st.rerun()
-    
-    # Chat messages display
+    st.markdown(f"### {thread_title}")
     
     # Display chat history
     for i, msg in enumerate(st.session_state.chat_history):
         if msg["role"] == "assistant":
-            # AI message with avatar
             col_avatar, col_content = st.columns([1, 15])
             
             with col_avatar:
@@ -518,17 +508,13 @@ else:
                 """, unsafe_allow_html=True)
             
             with col_content:
-                # Use st.markdown without HTML wrapper to properly render markdown
                 st.markdown(msg['content'])
-                
-                # Show "Done✅" status if not the last message
                 if i < len(st.session_state.chat_history) - 1:
                     st.caption("Done✅")
             
             st.markdown("<br>", unsafe_allow_html=True)
             
         else:
-            # User message with avatar on right
             col_content, col_avatar = st.columns([15, 1])
             
             with col_content:
@@ -542,29 +528,6 @@ else:
                 """, unsafe_allow_html=True)
             
             st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Quick action buttons (show after first AI message)
-    if len(st.session_state.chat_history) == 1 and st.session_state.selected_option == "start_trading":
-        
-        col_q1, col_q2, col_q3, col_q4 = st.columns([1.5, 2, 1.8, 0.3])
-        
-        with col_q1:
-            if st.button("I'm completely new", key="qa_new"):
-                st.session_state.chat_history.append({"role": "user", "content": "I'm completely new"})
-                st.rerun()
-        
-        with col_q2:
-            if st.button("Open a demo account and practice", key="qa_demo"):
-                st.session_state.chat_history.append({"role": "user", "content": "Open a demo account and practice"})
-                st.rerun()
-        
-        with col_q3:
-            if st.button("Try a quick product demo", key="qa_product"):
-                st.session_state.chat_history.append({"role": "user", "content": "Try a quick product demo"})
-                st.rerun()
-        
-        with col_q4:
-            st.markdown("<div style='padding-top: 8px; font-size: 20px; color: #cbd5e0;'>→</div>", unsafe_allow_html=True)
     
     # Chat input
     st.markdown("<br>", unsafe_allow_html=True)
@@ -588,22 +551,24 @@ else:
             st.error("❌ Please enter your OpenAI API key in the sidebar", icon="🔒")
         else:
             try:
-                # Prevent duplicate processing
                 st.session_state.last_processed_message = user_input
                 
                 client = OpenAI(api_key=api_key)
+                
+                # RAG: Retrieve relevant knowledge from YOUR files
+                with st.spinner("🔍 Searching your knowledge base..."):
+                    retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
                 
                 # Build user context
                 user_context = {
                     'state': st.session_state.user_state,
                     'step': st.session_state.onboarding_step,
                     'language': user_language,
-                    'name': user_name,
-                    'path': st.session_state.selected_option
+                    'name': user_name
                 }
                 
-                # Get system prompt
-                system_prompt = get_system_prompt(user_context)
+                # Build system prompt with CC-SC-R + RAG
+                system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
                 
                 # Add user message
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
@@ -615,39 +580,27 @@ else:
                             {"role": "system", "content": system_prompt},
                             *st.session_state.chat_history[-10:]
                         ],
-                        temperature=0.7,
-                        max_tokens=400
+                        temperature=0.1,      # Consistent, factual responses
+                        max_tokens=500        # Concise answers
                     )
                     
                     assistant_response = response.choices[0].message.content
-                    
-                    
                     st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
                 
                 st.rerun()
             
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}", icon="⚠️")
-                st.session_state.last_processed_message = ""  # Reset on error
-    
-    # Disclaimer
-    st.markdown("""
-        <div class="chat-disclaimer">
-            All chats are private & encrypted. Hpulse may make mistakes — verify 
-            <a href="#" target="_blank">Key Info ↗</a>
-        </div>
-    """, unsafe_allow_html=True)
     
     # Action buttons
     st.markdown("<br>", unsafe_allow_html=True)
     
-    col_clear, col_export, col_support = st.columns(3)
+    col_clear, col_export, col_back = st.columns(3)
     
     with col_clear:
         if st.button("🗑️ Clear Chat", use_container_width=True):
             st.session_state.chat_history = []
             st.session_state.conversation_started = False
-            st.session_state.last_processed_message = ""
             st.rerun()
     
     with col_export:
@@ -661,9 +614,10 @@ else:
                 use_container_width=True
             )
     
-    with col_support:
-        if st.button("👤 Contact Support", use_container_width=True):
-            st.info("Connecting to support...", icon="📞")
+    with col_back:
+        if st.button("← Back", use_container_width=True):
+            st.session_state.conversation_started = False
+            st.rerun()
 
 # Footer
 st.markdown("---")
