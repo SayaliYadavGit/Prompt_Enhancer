@@ -35,6 +35,12 @@ yarn-error.log*
 
 
 
+
+# Data files (if containing sensitive info)
+data/
+*.csv
+*.xlsx
+
 # Log files
 *.log
 
