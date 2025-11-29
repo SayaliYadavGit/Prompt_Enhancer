@@ -1,15 +1,14 @@
 """
-Hantec AI Mentor - Clean RAG Implementation
+Hantec AI Mentor - RAG Implementation with ChromaDB
+Compatible with Streamlit Cloud
 Add your own knowledge files to data/knowledge_base/
-Supports: .txt, .md, .json, .pdf (text), .docx
+Supports: .txt, .md, .json
 """
 
 from openai import OpenAI
 import streamlit as st
 import json
 from datetime import datetime
-import chromadb
-from chromadb.config import Settings
 import os
 import glob
 
@@ -21,38 +20,38 @@ st.set_page_config(
 )
 
 # ============================================================================
-# RAG SYSTEM - LOAD FROM YOUR FILES
+# RAG SYSTEM - CHROMADB with Streamlit Cloud Fix
 # ============================================================================
 
 class HantecRAG:
     def __init__(self, knowledge_base_path="data/knowledge_base"):
-        """
-        Initialize ChromaDB and load knowledge from your files
-        
-        Supported file formats:
-        - .txt - Plain text files
-        - .md - Markdown files
-        - .json - JSON files (will extract all text)
-        """
+        """Initialize ChromaDB and load knowledge from your files"""
         self.knowledge_base_path = knowledge_base_path
         
         # Create directory if it doesn't exist
         os.makedirs(knowledge_base_path, exist_ok=True)
         
-        # Initialize ChromaDB
-        self.client = chromadb.Client(Settings(
-            anonymized_telemetry=False,
-            allow_reset=True
-        ))
-        
-        # Create or get collection
+        # Initialize ChromaDB - Updated for newer versions
         try:
-            self.collection = self.client.get_collection(name="hantec_knowledge")
-        except:
+            import chromadb
+            from chromadb.config import Settings
+            
+            # Use ephemeral client for Streamlit Cloud (no persistence issues)
+            self.client = chromadb.EphemeralClient()
+            
+            # Create collection
             self.collection = self.client.create_collection(
                 name="hantec_knowledge",
-                metadata={"description": "Hantec Markets knowledge base from your files"}
+                metadata={"hnsw:space": "cosine"}  # Use cosine similarity
             )
+            
+        except ImportError as e:
+            st.error(f"ChromaDB import error: {e}")
+            st.info("Install: pip install chromadb==0.4.22")
+            raise
+        except Exception as e:
+            st.error(f"ChromaDB initialization error: {e}")
+            raise
         
         # Load all knowledge files
         self.load_knowledge_base()
@@ -87,14 +86,14 @@ class HantecRAG:
                     file_ext = os.path.splitext(filename)[1]
                     category = os.path.basename(os.path.dirname(file_path))
                     
-                    # Add to ChromaDB
+                    # Add to lists
                     documents.append(content)
                     metadatas.append({
                         "filename": filename,
                         "category": category,
-                        "type": file_ext[1:]  # Remove the dot
+                        "type": file_ext[1:]
                     })
-                    ids.append(f"{category}_{filename}_{len(documents)}")
+                    ids.append(f"doc_{len(documents)}_{filename}")
                     
             except Exception as e:
                 st.sidebar.error(f"Error loading {file_path}: {str(e)}")
@@ -102,40 +101,33 @@ class HantecRAG:
         # Add all documents to collection
         if documents:
             try:
-                # Clear existing collection
-                self.client.delete_collection("hantec_knowledge")
-                self.collection = self.client.create_collection(
-                    name="hantec_knowledge",
-                    metadata={"description": "Hantec Markets knowledge base from your files"}
-                )
-                
-                # Add new documents
                 self.collection.add(
                     documents=documents,
                     metadatas=metadatas,
                     ids=ids
                 )
-                st.sidebar.success(f"✅ Loaded {len(documents)} documents from {len(all_files)} files")
+                st.sidebar.success(f"✅ Loaded {len(documents)} documents")
             except Exception as e:
                 st.sidebar.error(f"Error adding to ChromaDB: {str(e)}")
         else:
-            st.sidebar.warning("⚠️ No valid content found in files")
+            st.sidebar.warning("⚠️ No valid content found")
     
     def _read_file(self, file_path):
         """Read content from different file types"""
         file_ext = os.path.splitext(file_path)[1].lower()
         
-        if file_ext in ['.txt', '.md']:
-            # Read text/markdown files
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return f.read()
-        
-        elif file_ext == '.json':
-            # Read JSON and convert to text
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                # Convert JSON to readable text
-                return json.dumps(data, indent=2)
+        try:
+            if file_ext in ['.txt', '.md']:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            
+            elif file_ext == '.json':
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    return json.dumps(data, indent=2)
+        except Exception as e:
+            st.sidebar.error(f"Error reading {file_path}: {e}")
+            return ""
         
         return ""
     
@@ -147,19 +139,18 @@ class HantecRAG:
                 n_results=n_results
             )
             
-            if results['documents'] and results['documents'][0]:
-                # Combine retrieved documents
+            if results and results.get('documents') and results['documents'][0]:
                 retrieved_text = "\n\n---\n\n".join(results['documents'][0])
                 
-                # Add source information
                 sources = []
-                if results['metadatas'] and results['metadatas'][0]:
+                if results.get('metadatas') and results['metadatas'][0]:
                     for meta in results['metadatas'][0]:
                         sources.append(f"{meta.get('category', 'unknown')}/{meta.get('filename', 'unknown')}")
                 
                 return retrieved_text, sources
             
             return "", []
+            
         except Exception as e:
             st.sidebar.error(f"Retrieval error: {str(e)}")
             return "", []
@@ -176,7 +167,6 @@ def get_rag_system():
 def build_system_prompt(user_context, retrieved_knowledge, sources):
     """Build complete system prompt with CC-SC-R framework"""
     
-    # Add source attribution if available
     source_info = ""
     if sources:
         source_info = f"\n\nSOURCES: {', '.join(sources)}"
@@ -229,7 +219,7 @@ Remember: You're a mentor, not a financial advisor. Keep it conversational, help
 # STREAMLIT UI
 # ============================================================================
 
-# Custom CSS (keeping it minimal)
+# Custom CSS
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -313,7 +303,6 @@ with st.sidebar:
     st.markdown("### 📚 Knowledge Base")
     st.info("Add files to: `data/knowledge_base/`")
     
-    # Show current status
     if os.path.exists("data/knowledge_base"):
         files = glob.glob("data/knowledge_base/**/*.*", recursive=True)
         st.caption(f"📁 {len([f for f in files if os.path.isfile(f)])} files found")
@@ -325,8 +314,9 @@ with st.sidebar:
     st.markdown("---")
     
     st.markdown("### ⚙️ AI Settings")
-    st.caption("Temperature: 0.1 (consistent)")
-    st.caption("Max Tokens: 500 (concise)")
+    st.caption("✓ Temperature: 0.1")
+    st.caption("✓ Max Tokens: 500")
+    st.caption("✓ RAG: ChromaDB")
     
     st.markdown("---")
     
@@ -349,7 +339,11 @@ if 'last_processed_message' not in st.session_state:
     st.session_state.last_processed_message = ""
 
 # Initialize RAG
-rag_system = get_rag_system()
+try:
+    rag_system = get_rag_system()
+except Exception as e:
+    st.error(f"Failed to initialize RAG system: {e}")
+    st.stop()
 
 # MAIN CONTENT
 if not st.session_state.conversation_started:
@@ -555,7 +549,7 @@ else:
                 
                 client = OpenAI(api_key=api_key)
                 
-                # RAG: Retrieve relevant knowledge from YOUR files
+                # RAG: Retrieve relevant knowledge
                 with st.spinner("🔍 Searching your knowledge base..."):
                     retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
                 
@@ -567,7 +561,7 @@ else:
                     'name': user_name
                 }
                 
-                # Build system prompt with CC-SC-R + RAG
+                # Build system prompt
                 system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
                 
                 # Add user message
@@ -580,8 +574,8 @@ else:
                             {"role": "system", "content": system_prompt},
                             *st.session_state.chat_history[-10:]
                         ],
-                        temperature=0.1,      # Consistent, factual responses
-                        max_tokens=500        # Concise answers
+                        temperature=0.1,
+                        max_tokens=500
                     )
                     
                     assistant_response = response.choices[0].message.content
