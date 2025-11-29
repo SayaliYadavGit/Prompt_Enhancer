@@ -1,0 +1,81 @@
+#Hantec Webtrader 
+#Quick Start Manual
+
+#What is Hantec WebTrader
+Hantec WebTrader is a web-based trading platform designed for fast, flexible, and secure access to the financial markets—without the need to download or install any software.
+#With WebTrader, you can:
+Log in to your trading account from any web browser
+Trade your favourite instruments with real time execution
+Access live prices, advanced charting, and other tools
+Seamless Access
+Log in with your MetaTrader credentials—
+no new setup required.
+Multi‑Account Connectivity
+Link multiple live and demo accounts to
+easily switch between them when trading.
+One‑Click Trading
+Execute market, limit, or stop orders
+directly in a single click.
+Live prices and charts
+Analyse charts and trends, and see prices
+in real time, as you trade.
+Real‑Time Position Monitoring
+Track open positions and pending orders,
+and see your overall trading performance.
+Bulk Position Controls
+Close all, profitable, or losing positions in
+bulk to manage risk efficiently.
+No Downloads or Installation
+Just open your browser, log in, and start
+trading.
+Track Your Favourite Assets
+From top picks and market gainers, to
+your preferred symbols for trading.
+Getting Started
+Visit the Hantec WebTrader login portal
+Choose Live Account or Demo Account
+Sign in with your MetaTrader credentials
+Trading
+Features
+Trade Better.
+View candlestick or line charts with
+live pricing
+Time frames from 1 minutes to 1 month
+Map trendlines, cross lines, Fibonacci Retracement & more
+Moving averages, RSI and all other indicators
+Order types Market, Limit or Stop orders
+Trade in lots or units For complete flexibility
+Stop-loss and take-profit limits So you can stay in control
+Bulk position management Close all positions, or profitable or losing positions only
+One-click trading For instant trade execution
+Navigating on Hantec WebTrader
+Navigate through the portal from the left-hand panel,
+consisting of three main sections:
+Trade
+Access live charts, real-time pricing and technical
+indicators.
+Place Buy or Sell orders, or enable One-Click
+Trading for trade execution with a single click.
+View and manage open positions and pending
+orders.
+Markets
+View top market gainers and losers, assets you
+are trading, or watchlisted symbols.
+To watchlist a symbol, simple click the star icon
+next to it and it will be added to your Favourites
+Assets
+View and manage open positions and pending
+orders.
+View your overall profitability and portfolio.
+You can also access additional features from the
+top Navigation Bar.
+Search: Quickly find symbols you are searching
+for
+Account Details: View balance, equity, margin,
+profit/loss and more
+Manage Funds: Direct access to your Client
+Portal for deposits or withdrawals
+Switch Accounts: Click the account dropdown to
+switch between linked live and demo accounts
+Other: View and manage notifications, linked
+devices, passwords and more

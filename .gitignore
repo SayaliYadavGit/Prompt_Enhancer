@@ -33,10 +33,7 @@ yarn-error.log*
 # Streamlit (for your Week 1 & 2 projects)
 .streamlit/secrets.toml
 
-# Data files (if containing sensitive info)
-data/
-*.csv
-*.xlsx
+
 
 # Log files
 *.log
