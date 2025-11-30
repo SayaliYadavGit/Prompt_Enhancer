@@ -568,17 +568,14 @@ else:
             st.error("❌ Please enter your OpenAI API key in the sidebar", icon="🔒")
         else:
             try:
-                st.session_state.last_processed_message = user_input
-                
-                # Debug: Show that processing started
-                st.info("Processing your message...")
-                
                 client = OpenAI(api_key=api_key)
+                
+                # Add user message first
+                st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
                 # RAG: Retrieve relevant knowledge
                 with st.spinner("🔍 Searching your knowledge base..."):
                     retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
-                    st.success(f"Found {len(sources)} relevant documents")
                 
                 # Build user context
                 user_context = {
@@ -590,9 +587,6 @@ else:
                 
                 # Build system prompt
                 system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
-                
-                # Add user message
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
                 with st.spinner("🤖 AI Mentor is thinking..."):
                     response = client.chat.completions.create(
@@ -607,7 +601,9 @@ else:
                     
                     assistant_response = response.choices[0].message.content
                     st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-                    st.success("Response generated!")
+                
+                # Mark as processed AFTER everything is done
+                st.session_state.last_processed_message = user_input
                 
                 st.rerun()
             
