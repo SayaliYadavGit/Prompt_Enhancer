@@ -288,16 +288,27 @@ st.markdown("""
 # Sidebar
 with st.sidebar:
     st.markdown("## 🔑 API Configuration")
-    api_key = st.text_input(
+    
+    # Initialize session state for API key if not exists
+    if 'api_key_stored' not in st.session_state:
+        st.session_state.api_key_stored = ""
+    
+    # Get API key from input
+    api_key_input = st.text_input(
         "Enter your OpenAI API Key",
+        value=st.session_state.api_key_stored,
         type="password",
         help="Get your API key from https://platform.openai.com/api-keys",
         key="api_key_input"
     )
     
-    if api_key:
+    # Store in session state
+    if api_key_input:
+        st.session_state.api_key_stored = api_key_input
+        api_key = api_key_input
         st.success("✓ API key connected", icon="✅")
     else:
+        api_key = ""
         st.warning("⚠ Please enter your API key", icon="⚠️")
     
     st.markdown("---")
@@ -559,11 +570,15 @@ else:
             try:
                 st.session_state.last_processed_message = user_input
                 
+                # Debug: Show that processing started
+                st.info("Processing your message...")
+                
                 client = OpenAI(api_key=api_key)
                 
                 # RAG: Retrieve relevant knowledge
                 with st.spinner("🔍 Searching your knowledge base..."):
                     retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
+                    st.success(f"Found {len(sources)} relevant documents")
                 
                 # Build user context
                 user_context = {
@@ -592,11 +607,15 @@ else:
                     
                     assistant_response = response.choices[0].message.content
                     st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+                    st.success("Response generated!")
                 
                 st.rerun()
             
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}", icon="⚠️")
+                st.error(f"Error type: {type(e).__name__}")
+                import traceback
+                st.code(traceback.format_exc())
     
     # Action buttons
     st.markdown("<br>", unsafe_allow_html=True)
