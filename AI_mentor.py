@@ -34,16 +34,28 @@ class HantecRAG:
         # Initialize ChromaDB - Updated for newer versions
         try:
             import chromadb
-            from chromadb.config import Settings
+            from chromadb.utils import embedding_functions
             
             # Use ephemeral client for Streamlit Cloud (no persistence issues)
             self.client = chromadb.EphemeralClient()
             
-            # Create collection
-            self.collection = self.client.create_collection(
-                name="hantec_knowledge",
-                metadata={"hnsw:space": "cosine"}  # Use cosine similarity
-            )
+            # Use default embedding function
+            default_ef = embedding_functions.DefaultEmbeddingFunction()
+            
+            # Get or create collection
+            try:
+                # Try to get existing collection
+                self.collection = self.client.get_collection(
+                    name="hantec_knowledge",
+                    embedding_function=default_ef
+                )
+            except:
+                # Collection doesn't exist, create it
+                self.collection = self.client.create_collection(
+                    name="hantec_knowledge",
+                    embedding_function=default_ef,
+                    metadata={"hnsw:space": "cosine"}
+                )
             
         except ImportError as e:
             st.error(f"ChromaDB import error: {e}")
