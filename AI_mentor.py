@@ -197,6 +197,8 @@ CRITICAL CONSTRAINTS:
 - ALWAYS include risk disclaimers for trading queries
 - NO storage or repetition of PII
 - All responses must be FSC (Mauritius) compliant
+- NEVER INVENT OR GUESS INFORMATION - Only use facts from the knowledge base below
+- If the knowledge base doesn't contain the answer, say "I don't have specific information about that"
 
 RESPONSE STRUCTURE:
 - Keep answers SHORT and PRECISE (2-4 sentences maximum)
@@ -207,8 +209,16 @@ RESPONSE STRUCTURE:
 - Use friendly, conversational tone
 
 HANTEC KNOWLEDGE BASE:
-{retrieved_knowledge if retrieved_knowledge else "No specific knowledge found - provide general guidance and suggest contacting support for details."}
+{retrieved_knowledge if retrieved_knowledge else "No specific knowledge found - MUST redirect to support."}
 {source_info}
+
+CRITICAL RULE - ANTI-HALLUCINATION:
+- ONLY answer questions that are DIRECTLY addressed in the knowledge base above
+- If the knowledge base is empty or doesn't contain relevant info, respond with:
+  "I don't have specific information about that. Please contact support@hmarkets.com"
+- DO NOT use general trading knowledge - ONLY use the Hantec knowledge base provided
+- DO NOT make assumptions about Hantec's services, fees, or processes
+- If unsure, ALWAYS redirect to support
 
 MANDATORY DISCLAIMERS:
 - For trading queries: "⚠️ Trading involves risk. This is for educational purposes only."
@@ -220,11 +230,12 @@ PERSONALITY:
 - Empowering and motivational
 - Transparent about limitations
 - Patient, never condescending
+- HONEST when you don't know something
 
 Company website: hmarkets.com
 Support: support@hmarkets.com | Live chat 24/5
 
-Remember: You're a mentor, not a financial advisor. Keep it conversational, helpful, and compliant.
+Remember: You're a mentor, not a financial advisor. If the knowledge base doesn't have the answer, admit it and direct to support. NEVER GUESS OR INVENT INFORMATION.
 """
 
 # ============================================================================
@@ -576,6 +587,40 @@ else:
                 # RAG: Retrieve relevant knowledge
                 with st.spinner("🔍 Searching your knowledge base..."):
                     retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
+                
+                # Check if we actually found relevant information
+                if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
+                    # No relevant knowledge found - show what's available instead
+                    
+                    # Get list of available topics from knowledge base
+                    available_topics = []
+                    kb_path = "data/knowledge_base"
+                    
+                    if os.path.exists(kb_path):
+                        # Get categories (folder names)
+                        categories = [d for d in os.listdir(kb_path) 
+                                    if os.path.isdir(os.path.join(kb_path, d))]
+                        
+                        for category in categories:
+                            # Get file names in each category
+                            cat_path = os.path.join(kb_path, category)
+                            files = [f.replace('.txt', '').replace('.md', '').replace('_', ' ').title() 
+                                   for f in os.listdir(cat_path) 
+                                   if f.endswith(('.txt', '.md', '.json'))]
+                            
+                            if files:
+                                available_topics.append(f"**{category.replace('_', ' ').title()}:** {', '.join(files[:5])}")
+                    
+                    # Build response with available topics
+                    topics_text = "\n".join([f"- {topic}" for topic in available_topics[:4]]) if available_topics else "various trading topics"
+                    
+                    st.session_state.chat_history.append({
+                        "role": "assistant",
+                        "content": f"I don't have specific information about that in my knowledge base.\n\n**But I can help you with:**\n{topics_text}\n\nFor other questions, please contact **support@hmarkets.com** or use our live chat (24/5).\n\nWhat would you like to know?"
+                    })
+                    st.session_state.last_processed_message = user_input
+                    st.rerun()
+                    return
                 
                 # Build user context
                 user_context = {
