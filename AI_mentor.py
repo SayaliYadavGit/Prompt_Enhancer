@@ -1,12 +1,14 @@
 """
 Hantec AI Mentor - Cleaned & Optimized Version
-RAG Implementation with ChromaDB
+RAG Implementation with ChromaDB + Web Scraping
 """
 
 from openai import OpenAI
 import streamlit as st
 import os
 import glob
+import requests
+from bs4 import BeautifulSoup
 
 # ============================================================================
 # PAGE CONFIG
@@ -193,13 +195,57 @@ def process_message(user_input, api_key, rag_system, user_context):
     """Process user message and get AI response"""
     client = OpenAI(api_key=api_key)
     
-    # RAG: Retrieve relevant knowledge
+    # RAG: Retrieve relevant knowledge from local files
     with st.spinner("🔍 Searching your knowledge base..."):
         retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
     
-    # Check if we found relevant information
+    # Track all sources
+    all_sources = []
+    if sources:
+        all_sources.extend([f"📄 {s}" for s in sources])
+    
+    # If no local knowledge found, try fetching from hmarkets.com
     if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
-        # No relevant knowledge found
+        try:
+            with st.spinner("🌐 Checking hmarkets.com..."):
+                import requests
+                from bs4 import BeautifulSoup
+                
+                # Try to fetch relevant page from hmarkets.com
+                search_urls = [
+                    "https://hmarkets.com/about",
+                    "https://hmarkets.com/trading",
+                    "https://hmarkets.com/faq"
+                ]
+                
+                web_content = []
+                for url in search_urls:
+                    try:
+                        response = requests.get(url, timeout=5)
+                        if response.status_code == 200:
+                            soup = BeautifulSoup(response.content, 'html.parser')
+                            # Extract main content (remove scripts, styles)
+                            for script in soup(["script", "style"]):
+                                script.decompose()
+                            text = soup.get_text()
+                            # Clean up whitespace
+                            lines = (line.strip() for line in text.splitlines())
+                            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                            text = ' '.join(chunk for chunk in chunks if chunk)
+                            if len(text) > 100:
+                                web_content.append(text[:2000])
+                                all_sources.append(f"🌐 {url}")
+                    except:
+                        continue
+                
+                if web_content:
+                    retrieved_knowledge = "\n\n".join(web_content)
+        except:
+            pass
+    
+    # Check if we found relevant information (from files or website)
+    if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
+        # No relevant knowledge found anywhere
         available_topics = get_available_topics()
         topics_text = "\n".join([f"- {topic}" for topic in available_topics[:4]]) if available_topics else "various trading topics"
         
@@ -221,7 +267,14 @@ def process_message(user_input, api_key, rag_system, user_context):
             max_tokens=500
         )
         
-        return response.choices[0].message.content
+        ai_response = response.choices[0].message.content
+        
+        # Add source attribution at the bottom
+        if all_sources:
+            source_text = "\n\n---\n📚 **Sources:** " + " • ".join(all_sources)
+            ai_response += source_text
+        
+        return ai_response
 
 # ============================================================================
 # UI COMPONENTS
