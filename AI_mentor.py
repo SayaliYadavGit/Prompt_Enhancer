@@ -202,7 +202,7 @@ def process_message(user_input, api_key, rag_system, user_context):
     # Track all sources
     all_sources = []
     if sources:
-        all_sources.extend([f"📄 {s}" for s in sources])
+        all_sources.extend(sources)
     
     # If no local knowledge found, try fetching from hmarkets.com
     if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
@@ -211,35 +211,41 @@ def process_message(user_input, api_key, rag_system, user_context):
                 import requests
                 from bs4 import BeautifulSoup
                 
-                # Try to fetch relevant page from hmarkets.com
+                # Specific pages to check on hmarkets.com
                 search_urls = [
+                    "https://hmarkets.com/trading-platforms/hantec-markets-mobile-app/",
+                    "https://hmarkets.com/trading-platforms/hantec-social/",
+                    "https://hmarkets.com/trading-platforms/mt4-trading-platform/",
+                    "https://hmarkets.com/trading-platforms/metatrader-5/",
+                    "https://hmarkets.com/trading-platforms/client-portal/",
+                    "https://hmarkets.com/trading-platforms/hantec-markets-web-trader/",
+                    "https://hmarkets.com/tools/market-analysis/",
                     "https://hmarkets.com/about",
-                    "https://hmarkets.com/trading",
                     "https://hmarkets.com/faq"
                 ]
                 
                 web_content = []
                 for url in search_urls:
                     try:
-                        response = requests.get(url, timeout=5)
+                        response = requests.get(url, timeout=3, headers={'User-Agent': 'Mozilla/5.0'})
                         if response.status_code == 200:
                             soup = BeautifulSoup(response.content, 'html.parser')
-                            # Extract main content (remove scripts, styles)
-                            for script in soup(["script", "style"]):
-                                script.decompose()
+                            # Extract main content (remove scripts, styles, nav, footer)
+                            for element in soup(["script", "style", "nav", "footer", "header"]):
+                                element.decompose()
                             text = soup.get_text()
                             # Clean up whitespace
                             lines = (line.strip() for line in text.splitlines())
                             chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
                             text = ' '.join(chunk for chunk in chunks if chunk)
-                            if len(text) > 100:
-                                web_content.append(text[:2000])
-                                all_sources.append(f"🌐 {url}")
+                            if len(text) > 200:
+                                web_content.append(text[:3000])
                     except:
                         continue
                 
                 if web_content:
                     retrieved_knowledge = "\n\n".join(web_content)
+                    all_sources.append("hmarkets.com")
         except:
             pass
     
@@ -254,7 +260,7 @@ def process_message(user_input, api_key, rag_system, user_context):
         return response
     
     # Build system prompt and get AI response
-    system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
+    system_prompt = build_system_prompt(user_context, retrieved_knowledge, all_sources)
     
     with st.spinner("🤖 AI Mentor is thinking..."):
         response = client.chat.completions.create(
@@ -271,7 +277,15 @@ def process_message(user_input, api_key, rag_system, user_context):
         
         # Add source attribution at the bottom
         if all_sources:
-            source_text = "\n\n---\n📚 **Sources:** " + " • ".join(all_sources)
+            # Remove duplicates
+            unique_sources = []
+            seen = set()
+            for s in all_sources:
+                if s not in seen:
+                    unique_sources.append(s)
+                    seen.add(s)
+            
+            source_text = "\n\n---\n📚 **Source:** " + ", ".join(unique_sources)
             ai_response += source_text
         
         return ai_response
