@@ -499,11 +499,76 @@ if not st.session_state.conversation_started:
         if not api_key:
             st.error("❌ Please enter your OpenAI API key in the sidebar", icon="🔒")
         else:
-            st.session_state.last_processed_message = welcome_input
-            st.session_state.conversation_started = True
-            st.session_state.selected_option = "general"
-            st.session_state.chat_history = [{"role": "user", "content": welcome_input}]
-            st.rerun()
+            try:
+                st.session_state.last_processed_message = welcome_input
+                st.session_state.conversation_started = True
+                st.session_state.selected_option = "general"
+                
+                # Add user message to history
+                st.session_state.chat_history = [{"role": "user", "content": welcome_input}]
+                
+                # Process with AI immediately
+                client = OpenAI(api_key=api_key)
+                
+                # RAG: Retrieve relevant knowledge
+                with st.spinner("🔍 Searching your knowledge base..."):
+                    retrieved_knowledge, sources = rag_system.retrieve(welcome_input, n_results=3)
+                
+                # Check if we found relevant information
+                if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
+                    # No relevant knowledge found
+                    available_topics = []
+                    kb_path = "data/knowledge_base"
+                    
+                    if os.path.exists(kb_path):
+                        categories = [d for d in os.listdir(kb_path) 
+                                    if os.path.isdir(os.path.join(kb_path, d))]
+                        
+                        for category in categories:
+                            cat_path = os.path.join(kb_path, category)
+                            files = [f.replace('.txt', '').replace('.md', '').replace('_', ' ').title() 
+                                   for f in os.listdir(cat_path) 
+                                   if f.endswith(('.txt', '.md', '.json'))]
+                            
+                            if files:
+                                available_topics.append(f"**{category.replace('_', ' ').title()}:** {', '.join(files[:5])}")
+                    
+                    topics_text = "\n".join([f"- {topic}" for topic in available_topics[:4]]) if available_topics else "various trading topics"
+                    
+                    st.session_state.chat_history.append({
+                        "role": "assistant",
+                        "content": f"I don't have specific information about that in my knowledge base.\n\n**But I can help you with:**\n{topics_text}\n\nFor other questions, please contact **support@hmarkets.com** or use our live chat (24/5).\n\nWhat would you like to know?"
+                    })
+                else:
+                    # Build user context
+                    user_context = {
+                        'state': st.session_state.user_state,
+                        'step': st.session_state.onboarding_step,
+                        'language': user_language,
+                        'name': user_name
+                    }
+                    
+                    # Build system prompt
+                    system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
+                    
+                    with st.spinner("🤖 AI Mentor is thinking..."):
+                        response = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=[
+                                {"role": "system", "content": system_prompt},
+                                *st.session_state.chat_history
+                            ],
+                            temperature=0.1,
+                            max_tokens=500
+                        )
+                        
+                        assistant_response = response.choices[0].message.content
+                        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+                
+                st.rerun()
+            
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}", icon="⚠️")
 
 else:
     # ==================== CONVERSATION INTERFACE ====================
