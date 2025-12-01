@@ -1,18 +1,17 @@
 """
-Hantec AI Mentor - RAG Implementation with ChromaDB
-Compatible with Streamlit Cloud
-Add your own knowledge files to data/knowledge_base/
-Supports: .txt, .md, .json
+Hantec AI Mentor - Cleaned & Optimized Version
+RAG Implementation with ChromaDB
 """
 
 from openai import OpenAI
 import streamlit as st
-import json
-from datetime import datetime
 import os
 import glob
 
-# Page configuration
+# ============================================================================
+# PAGE CONFIG
+# ============================================================================
+
 st.set_page_config(
     page_title="Hantec AI Mentor",
     page_icon="🤖",
@@ -21,58 +20,41 @@ st.set_page_config(
 )
 
 # ============================================================================
-# RAG SYSTEM - CHROMADB with Streamlit Cloud Fix
+# RAG SYSTEM
 # ============================================================================
 
 class HantecRAG:
     def __init__(self, knowledge_base_path="data/knowledge_base"):
-        """Initialize ChromaDB and load knowledge from your files"""
+        """Initialize ChromaDB and load knowledge"""
         self.knowledge_base_path = knowledge_base_path
-        
-        # Create directory if it doesn't exist
         os.makedirs(knowledge_base_path, exist_ok=True)
         
-        # Initialize ChromaDB - Updated for newer versions
         try:
             import chromadb
             from chromadb.utils import embedding_functions
             
-            # Use ephemeral client for Streamlit Cloud (no persistence issues)
             self.client = chromadb.EphemeralClient()
-            
-            # Use default embedding function
             default_ef = embedding_functions.DefaultEmbeddingFunction()
             
-            # Get or create collection
             try:
-                # Try to get existing collection
                 self.collection = self.client.get_collection(
                     name="hantec_knowledge",
                     embedding_function=default_ef
                 )
             except:
-                # Collection doesn't exist, create it
                 self.collection = self.client.create_collection(
                     name="hantec_knowledge",
                     embedding_function=default_ef,
                     metadata={"hnsw:space": "cosine"}
                 )
-            
-        except ImportError as e:
-            st.error(f"ChromaDB import error: {e}")
-            st.info("Install: pip install chromadb==0.4.22")
-            raise
         except Exception as e:
             st.error(f"ChromaDB initialization error: {e}")
             raise
         
-        # Load all knowledge files
         self.load_knowledge_base()
     
     def load_knowledge_base(self):
         """Load all files from knowledge_base folder"""
-        
-        # Get all supported files
         txt_files = glob.glob(f"{self.knowledge_base_path}/**/*.txt", recursive=True)
         md_files = glob.glob(f"{self.knowledge_base_path}/**/*.md", recursive=True)
         json_files = glob.glob(f"{self.knowledge_base_path}/**/*.json", recursive=True)
@@ -90,28 +72,17 @@ class HantecRAG:
         
         for file_path in all_files:
             try:
-                # Read file content
                 content = self._read_file(file_path)
-                
-                if content and content.strip():
-                    # Extract file info
-                    filename = os.path.basename(file_path)
-                    file_ext = os.path.splitext(filename)[1]
-                    category = os.path.basename(os.path.dirname(file_path))
-                    
-                    # Add to lists
+                if content and len(content.strip()) > 20:
                     documents.append(content)
                     metadatas.append({
-                        "filename": filename,
-                        "category": category,
-                        "type": file_ext[1:]
+                        "source": file_path,
+                        "filename": os.path.basename(file_path)
                     })
-                    ids.append(f"doc_{len(documents)}_{filename}")
-                    
+                    ids.append(file_path)
             except Exception as e:
                 st.sidebar.error(f"Error loading {file_path}: {str(e)}")
         
-        # Add all documents to collection
         if documents:
             try:
                 self.collection.add(
@@ -126,173 +97,202 @@ class HantecRAG:
             st.sidebar.warning("⚠️ No valid content found")
     
     def _read_file(self, file_path):
-        """Read content from different file types"""
-        file_ext = os.path.splitext(file_path)[1].lower()
-        
+        """Read file content"""
         try:
-            if file_ext in ['.txt', '.md']:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    return f.read()
-            
-            elif file_ext == '.json':
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    return json.dumps(data, indent=2)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
         except Exception as e:
             st.sidebar.error(f"Error reading {file_path}: {e}")
             return ""
-        
-        return ""
     
     def retrieve(self, query, n_results=3):
-        """Retrieve relevant documents from knowledge base"""
+        """Retrieve relevant documents"""
         try:
             results = self.collection.query(
                 query_texts=[query],
                 n_results=n_results
             )
             
-            if results and results.get('documents') and results['documents'][0]:
-                retrieved_text = "\n\n---\n\n".join(results['documents'][0])
-                
-                sources = []
-                if results.get('metadatas') and results['metadatas'][0]:
-                    for meta in results['metadatas'][0]:
-                        sources.append(f"{meta.get('category', 'unknown')}/{meta.get('filename', 'unknown')}")
-                
-                return retrieved_text, sources
+            documents = results['documents'][0] if results['documents'] else []
+            metadatas = results['metadatas'][0] if results['metadatas'] else []
             
-            return "", []
+            retrieved_knowledge = "\n\n".join(documents)
+            sources = [m.get('filename', 'Unknown') for m in metadatas]
             
+            return retrieved_knowledge, sources
         except Exception as e:
             st.sidebar.error(f"Retrieval error: {str(e)}")
             return "", []
 
-# Initialize RAG system
 @st.cache_resource
 def get_rag_system():
+    """Initialize RAG system (cached)"""
     return HantecRAG()
 
 # ============================================================================
-# CC-SC-R FRAMEWORK
+# AI FUNCTIONS
 # ============================================================================
 
 def build_system_prompt(user_context, retrieved_knowledge, sources):
-    """Build complete system prompt with CC-SC-R framework"""
-    
-    source_info = ""
-    if sources:
-        source_info = f"\n\nSOURCES: {', '.join(sources)}"
+    """Build system prompt with context"""
+    source_info = f"\n\nSources: {', '.join(sources)}" if sources else ""
     
     return f"""You are the Hantec Markets AI Mentor, a conversational assistant guiding users through CFD trading.
 
 USER CONTEXT:
 - Name: {user_context.get('name', 'User')}
 - State: {user_context.get('state', 'unknown')}
-- Onboarding Step: {user_context.get('step', 0)}/9
 - Language: {user_context.get('language', 'English')}
 
 CRITICAL CONSTRAINTS:
-- NEVER mention guaranteed returns or promise profits
+- NEVER mention guaranteed returns
 - NO financial advice - education only
 - ALWAYS include risk disclaimers for trading queries
-- NO storage or repetition of PII
-- All responses must be FSC (Mauritius) compliant
-- NEVER INVENT OR GUESS INFORMATION - Only use facts from the knowledge base below
-- If the knowledge base doesn't contain the answer, say "I don't have specific information about that"
+- NEVER INVENT INFORMATION - Only use facts from knowledge base
+- If knowledge base doesn't contain answer, say "I don't have specific information"
 
 RESPONSE STRUCTURE:
-- Keep answers SHORT and PRECISE (2-4 sentences maximum)
+- Keep answers SHORT (2-4 sentences max)
 - Use bullet points for lists
 - Use **bold** for emphasis
-- Include ⚠️ emoji for warnings
-- When providing links, ALWAYS use hmarkets.com domain
-- Use friendly, conversational tone
+- Include ⚠️ for warnings
 
-HANTEC KNOWLEDGE BASE:
+KNOWLEDGE BASE:
 {retrieved_knowledge if retrieved_knowledge else "No specific knowledge found - MUST redirect to support."}
 {source_info}
 
-CRITICAL RULE - ANTI-HALLUCINATION:
-- ONLY answer questions that are DIRECTLY addressed in the knowledge base above
-- If the knowledge base is empty or doesn't contain relevant info, respond with:
-  "I don't have specific information about that. Please contact support@hmarkets.com"
-- DO NOT use general trading knowledge - ONLY use the Hantec knowledge base provided
-- DO NOT make assumptions about Hantec's services, fees, or processes
-- If unsure, ALWAYS redirect to support
-
 MANDATORY DISCLAIMERS:
 - For trading queries: "⚠️ Trading involves risk. This is for educational purposes only."
-- For leverage: "Leverage magnifies both gains and losses"
-- If unsure: Redirect to support@hmarkets.com or live chat
 
-PERSONALITY:
-- Knowledgeable but humble
-- Empowering and motivational
-- Transparent about limitations
-- Patient, never condescending
-- HONEST when you don't know something
+Company: hmarkets.com | Support: support@hmarkets.com
 
-Company website: hmarkets.com
-Support: support@hmarkets.com | Live chat 24/5
-
-Remember: You're a mentor, not a financial advisor. If the knowledge base doesn't have the answer, admit it and direct to support. NEVER GUESS OR INVENT INFORMATION.
+Remember: NEVER GUESS OR INVENT INFORMATION.
 """
 
+def get_available_topics():
+    """Get list of available topics from knowledge base"""
+    available_topics = []
+    kb_path = "data/knowledge_base"
+    
+    if os.path.exists(kb_path):
+        categories = [d for d in os.listdir(kb_path) 
+                    if os.path.isdir(os.path.join(kb_path, d))]
+        
+        for category in categories:
+            cat_path = os.path.join(kb_path, category)
+            files = [f.replace('.txt', '').replace('.md', '').replace('_', ' ').title() 
+                   for f in os.listdir(cat_path) 
+                   if f.endswith(('.txt', '.md', '.json'))]
+            
+            if files:
+                available_topics.append(f"**{category.replace('_', ' ').title()}:** {', '.join(files[:5])}")
+    
+    return available_topics
+
+def process_message(user_input, api_key, rag_system, user_context):
+    """Process user message and get AI response"""
+    client = OpenAI(api_key=api_key)
+    
+    # RAG: Retrieve relevant knowledge
+    with st.spinner("🔍 Searching your knowledge base..."):
+        retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
+    
+    # Check if we found relevant information
+    if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
+        # No relevant knowledge found
+        available_topics = get_available_topics()
+        topics_text = "\n".join([f"- {topic}" for topic in available_topics[:4]]) if available_topics else "various trading topics"
+        
+        response = f"I don't have specific information about that in my knowledge base.\n\n**But I can help you with:**\n{topics_text}\n\nFor other questions, please contact **support@hmarkets.com** or use our live chat (24/5).\n\nWhat would you like to know?"
+        
+        return response
+    
+    # Build system prompt and get AI response
+    system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
+    
+    with st.spinner("🤖 AI Mentor is thinking..."):
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                *st.session_state.chat_history[-10:]
+            ],
+            temperature=0.1,
+            max_tokens=500
+        )
+        
+        return response.choices[0].message.content
+
 # ============================================================================
-# STREAMLIT UI
+# UI COMPONENTS
+# ============================================================================
+
+def render_message(msg, user_name):
+    """Render a single chat message"""
+    if msg["role"] == "assistant":
+        col_avatar, col_content = st.columns([1, 15])
+        with col_avatar:
+            st.markdown("""
+                <div style="width: 40px; height: 40px; background: #2d3748; border-radius: 50%; 
+                            display: flex; align-items: center; justify-content: center; 
+                            color: white; font-weight: 700; font-size: 16px;">H</div>
+            """, unsafe_allow_html=True)
+        with col_content:
+            st.markdown(msg['content'])
+        st.markdown("<br>", unsafe_allow_html=True)
+    else:
+        col_content, col_avatar = st.columns([15, 1])
+        with col_content:
+            st.markdown(f'<div style="text-align: right; background: #f7fafc; padding: 12px 16px; border-radius: 12px; margin-left: 60px;">{msg["content"]}</div>', unsafe_allow_html=True)
+        with col_avatar:
+            st.markdown(f"""
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+                            color: white; font-weight: 700; font-size: 16px;">{user_name[0]}</div>
+            """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+def render_welcome_card(emoji, title, items, button_text, button_key, bg_color="white"):
+    """Render a welcome card"""
+    text_color = "white" if bg_color != "white" else "#1a202c"
+    item_color = "rgba(255,255,255,0.95)" if bg_color != "white" else "#64748b"
+    
+    st.markdown(f"""
+        <div style="background: {bg_color}; padding: 32px; border-radius: 16px; min-height: 280px;
+                    box-shadow: {'0 4px 12px rgba(139, 0, 0, 0.2)' if bg_color != 'white' else '0 2px 8px rgba(0,0,0,0.08)'}; 
+                    border: {'none' if bg_color != 'white' else '1px solid #e2e8f0'};
+                    display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <div style="font-size: 40px; margin-right: 12px;">{emoji}</div>
+                    <div style="font-size: 24px; font-weight: 600; color: {text_color};">{title}</div>
+                </div>
+                <div style="font-size: 15px; color: {item_color}; line-height: 2;">
+                    {"<br>".join(items)}
+                </div>
+            </div>
+            <div style="text-align: right; font-size: 32px; color: {'rgba(255,255,255,0.8)' if bg_color != 'white' else '#cbd5e0'}; margin-top: 20px;">→</div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    return st.button(f"{emoji} {title}", key=button_key, use_container_width=True)
+
+# ============================================================================
+# MAIN APP
 # ============================================================================
 
 # Custom CSS
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
     * { font-family: 'Inter', sans-serif; }
     .main { background-color: #fafafa; }
     #MainMenu, footer, header { visibility: hidden; }
-    
     .stTextInput > div > div > input {
         border-radius: 16px;
         padding: 18px 24px;
         border: 1px solid #e2e8f0;
         font-size: 15px;
-    }
-    
-    .welcome-section {
-        text-align: center;
-        padding: 60px 20px 50px 20px;
-    }
-    
-    .logo-circle {
-        width: 90px;
-        height: 90px;
-        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-        border-radius: 50%;
-        margin: 0 auto 25px auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 36px;
-        color: white;
-        font-weight: 700;
-        font-style: italic;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-    }
-    
-    .welcome-title {
-        font-size: 36px;
-        font-weight: 600;
-        color: #1a202c;
-        margin-bottom: 16px;
-    }
-    
-    .name-highlight { color: #8B0000; }
-    
-    .welcome-subtitle {
-        font-size: 17px;
-        color: #64748b;
-        margin-bottom: 50px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -301,11 +301,9 @@ st.markdown("""
 with st.sidebar:
     st.markdown("## 🔑 API Configuration")
     
-    # Initialize session state for API key if not exists
     if 'api_key_stored' not in st.session_state:
         st.session_state.api_key_stored = ""
     
-    # Get API key from input
     api_key_input = st.text_input(
         "Enter your OpenAI API Key",
         value=st.session_state.api_key_stored,
@@ -314,7 +312,6 @@ with st.sidebar:
         key="api_key_input"
     )
     
-    # Store in session state
     if api_key_input:
         st.session_state.api_key_stored = api_key_input
         api_key = api_key_input
@@ -336,8 +333,6 @@ with st.sidebar:
     st.markdown("---")
     
     st.markdown("### 📚 Knowledge Base")
-    st.info("Add files to: `data/knowledge_base/`")
-    
     if os.path.exists("data/knowledge_base"):
         files = glob.glob("data/knowledge_base/**/*.*", recursive=True)
         st.caption(f"📁 {len([f for f in files if os.path.isfile(f)])} files found")
@@ -368,8 +363,6 @@ if 'last_processed_message' not in st.session_state:
     st.session_state.last_processed_message = ""
 if 'message_counter' not in st.session_state:
     st.session_state.message_counter = 0
-if 'processing_complete' not in st.session_state:
-    st.session_state.processing_complete = False
 
 # Initialize RAG
 try:
@@ -378,15 +371,22 @@ except Exception as e:
     st.error(f"Failed to initialize RAG system: {e}")
     st.stop()
 
-# MAIN CONTENT
+# Main content
 if not st.session_state.conversation_started:
     # ==================== WELCOME SCREEN ====================
     
     st.markdown(f"""
-        <div class="welcome-section">
-            <div class="logo-circle">H</div>
-            <div class="welcome-title">Welcome to Hantec one, <span class="name-highlight">{user_name}</span> 👋</div>
-            <div class="welcome-subtitle">Pick an option below to continue — or ask me anything to get started</div>
+        <div style="text-align: center; padding: 60px 20px 50px 20px;">
+            <div style="width: 90px; height: 90px; background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+                        border-radius: 50%; margin: 0 auto 25px auto; display: flex; align-items: center;
+                        justify-content: center; font-size: 36px; color: white; font-weight: 700;
+                        font-style: italic; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">H</div>
+            <div style="font-size: 36px; font-weight: 600; color: #1a202c; margin-bottom: 16px;">
+                Welcome to Hantec one, <span style="color: #8B0000;">{user_name}</span> 👋
+            </div>
+            <div style="font-size: 18px; color: #64748b; margin-bottom: 50px;">
+                Pick an option below to continue — or ask me anything to get started
+            </div>
         </div>
     """, unsafe_allow_html=True)
     
@@ -394,27 +394,12 @@ if not st.session_state.conversation_started:
     col1, col2, col3 = st.columns(3, gap="medium")
     
     with col1:
-        st.markdown("""
-            <div style="background: linear-gradient(135deg, #8B0000 0%, #B22222 100%); 
-                        color: white; padding: 32px; border-radius: 16px; min-height: 280px;
-                        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2); display: flex;
-                        flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                        <div style="font-size: 40px; margin-right: 12px;">🚀</div>
-                        <div style="font-size: 24px; font-weight: 600;">Start Live Trading</div>
-                    </div>
-                    <div style="font-size: 15px; line-height: 2; opacity: 0.95;">
-                        📊 Set up your account<br>
-                        💰 Make your first deposit<br>
-                        🎯 Start trading CFDs
-                    </div>
-                </div>
-                <div style="text-align: right; font-size: 32px; opacity: 0.8; margin-top: 20px;">→</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("🚀 Start Live Trading", key="btn_start_trading", use_container_width=True):
+        if render_welcome_card(
+            "🚀", "Start Live Trading",
+            ["📊 Set up your account", "💰 Make your first deposit", "🎯 Start trading CFDs"],
+            "🚀 Start Live Trading", "btn_start_trading",
+            "linear-gradient(135deg, #8B0000 0%, #B22222 100%)"
+        ):
             st.session_state.selected_option = "start_trading"
             st.session_state.conversation_started = True
             st.session_state.chat_history = [{
@@ -424,26 +409,11 @@ if not st.session_state.conversation_started:
             st.rerun()
     
     with col2:
-        st.markdown("""
-            <div style="background: white; padding: 32px; border-radius: 16px; min-height: 280px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
-                        display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                        <div style="font-size: 40px; margin-right: 12px;">📚</div>
-                        <div style="font-size: 24px; font-weight: 600; color: #1a202c;">Learn CFDs</div>
-                    </div>
-                    <div style="font-size: 15px; color: #64748b; line-height: 2;">
-                        📊 Master the fundamentals<br>
-                        📈 Try simple examples<br>
-                        📉 Level up your skills
-                    </div>
-                </div>
-                <div style="text-align: right; font-size: 32px; color: #cbd5e0; margin-top: 20px;">→</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("📚 Learn CFDs", key="btn_learn_cfds", use_container_width=True):
+        if render_welcome_card(
+            "📚", "Learn CFDs",
+            ["📊 Master the fundamentals", "📈 Try simple examples", "📉 Level up your skills"],
+            "📚 Learn CFDs", "btn_learn_cfds"
+        ):
             st.session_state.selected_option = "learn_cfds"
             st.session_state.conversation_started = True
             st.session_state.chat_history = [{
@@ -453,26 +423,11 @@ if not st.session_state.conversation_started:
             st.rerun()
     
     with col3:
-        st.markdown("""
-            <div style="background: white; padding: 32px; border-radius: 16px; min-height: 280px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
-                        display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                        <div style="font-size: 40px; margin-right: 12px;">💬</div>
-                        <div style="font-size: 24px; font-weight: 600; color: #1a202c;">Take a Quick Tour</div>
-                    </div>
-                    <div style="font-size: 15px; color: #64748b; line-height: 2;">
-                        🗺️ Dashboard walkthrough<br>
-                        📈 Features overview<br>
-                        📊 Charts and tools
-                    </div>
-                </div>
-                <div style="text-align: right; font-size: 32px; color: #cbd5e0; margin-top: 20px;">→</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("💬 Take a Quick Tour", key="btn_take_tour", use_container_width=True):
+        if render_welcome_card(
+            "💬", "Take a Quick Tour",
+            ["🗺️ Dashboard walkthrough", "📈 Features overview", "📊 Charts and tools"],
+            "💬 Take a Quick Tour", "btn_take_tour"
+        ):
             st.session_state.selected_option = "take_tour"
             st.session_state.conversation_started = True
             st.session_state.chat_history = [{
@@ -481,7 +436,7 @@ if not st.session_state.conversation_started:
             }]
             st.rerun()
     
-    # Chat input
+    # Chat input on welcome screen
     st.markdown("<br><br>", unsafe_allow_html=True)
     
     col_input, col_mic = st.columns([20, 1])
@@ -504,66 +459,19 @@ if not st.session_state.conversation_started:
                 st.session_state.conversation_started = True
                 st.session_state.selected_option = "general"
                 
-                # Add user message to history
+                # Add user message
                 st.session_state.chat_history = [{"role": "user", "content": welcome_input}]
                 
-                # Process with AI immediately
-                client = OpenAI(api_key=api_key)
+                # Get AI response
+                user_context = {
+                    'state': st.session_state.user_state,
+                    'step': st.session_state.onboarding_step,
+                    'language': user_language,
+                    'name': user_name
+                }
                 
-                # RAG: Retrieve relevant knowledge
-                with st.spinner("🔍 Searching your knowledge base..."):
-                    retrieved_knowledge, sources = rag_system.retrieve(welcome_input, n_results=3)
-                
-                # Check if we found relevant information
-                if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
-                    # No relevant knowledge found
-                    available_topics = []
-                    kb_path = "data/knowledge_base"
-                    
-                    if os.path.exists(kb_path):
-                        categories = [d for d in os.listdir(kb_path) 
-                                    if os.path.isdir(os.path.join(kb_path, d))]
-                        
-                        for category in categories:
-                            cat_path = os.path.join(kb_path, category)
-                            files = [f.replace('.txt', '').replace('.md', '').replace('_', ' ').title() 
-                                   for f in os.listdir(cat_path) 
-                                   if f.endswith(('.txt', '.md', '.json'))]
-                            
-                            if files:
-                                available_topics.append(f"**{category.replace('_', ' ').title()}:** {', '.join(files[:5])}")
-                    
-                    topics_text = "\n".join([f"- {topic}" for topic in available_topics[:4]]) if available_topics else "various trading topics"
-                    
-                    st.session_state.chat_history.append({
-                        "role": "assistant",
-                        "content": f"I don't have specific information about that in my knowledge base.\n\n**But I can help you with:**\n{topics_text}\n\nFor other questions, please contact **support@hmarkets.com** or use our live chat (24/5).\n\nWhat would you like to know?"
-                    })
-                else:
-                    # Build user context
-                    user_context = {
-                        'state': st.session_state.user_state,
-                        'step': st.session_state.onboarding_step,
-                        'language': user_language,
-                        'name': user_name
-                    }
-                    
-                    # Build system prompt
-                    system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
-                    
-                    with st.spinner("🤖 AI Mentor is thinking..."):
-                        response = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=[
-                                {"role": "system", "content": system_prompt},
-                                *st.session_state.chat_history
-                            ],
-                            temperature=0.1,
-                            max_tokens=500
-                        )
-                        
-                        assistant_response = response.choices[0].message.content
-                        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+                ai_response = process_message(welcome_input, api_key, rag_system, user_context)
+                st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
                 
                 st.rerun()
             
@@ -581,42 +489,11 @@ else:
     }
     
     thread_title = thread_titles.get(st.session_state.selected_option, "Chat")
-    
     st.markdown(f"### {thread_title}")
     
     # Display chat history
-    for i, msg in enumerate(st.session_state.chat_history):
-        if msg["role"] == "assistant":
-            col_avatar, col_content = st.columns([1, 15])
-            
-            with col_avatar:
-                st.markdown("""
-                    <div style="width: 40px; height: 40px; background: #2d3748; border-radius: 50%; 
-                                display: flex; align-items: center; justify-content: center; 
-                                color: white; font-weight: 700; font-size: 16px;">H</div>
-                """, unsafe_allow_html=True)
-            
-            with col_content:
-                st.markdown(msg['content'])
-                if i < len(st.session_state.chat_history) - 1:
-                    st.caption("Done✅")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-        else:
-            col_content, col_avatar = st.columns([15, 1])
-            
-            with col_content:
-                st.markdown(f'<div style="text-align: right; background: #f7fafc; padding: 12px 16px; border-radius: 12px; margin-left: 60px;">{msg["content"]}</div>', unsafe_allow_html=True)
-            
-            with col_avatar:
-                st.markdown(f"""
-                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                                border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-                                color: white; font-weight: 700; font-size: 16px;">{user_name[0]}</div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
+    for msg in st.session_state.chat_history:
+        render_message(msg, user_name)
     
     # Chat input
     st.markdown("<br>", unsafe_allow_html=True)
@@ -640,93 +517,28 @@ else:
             st.error("❌ Please enter your OpenAI API key in the sidebar", icon="🔒")
         else:
             try:
-                # Mark as processed immediately to prevent reprocessing
                 st.session_state.last_processed_message = user_input
                 
-                client = OpenAI(api_key=api_key)
-                
-                # Add user message to history
+                # Add user message
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
-                # RAG: Retrieve relevant knowledge
-                with st.spinner("🔍 Searching your knowledge base..."):
-                    retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
+                # Get AI response
+                user_context = {
+                    'state': st.session_state.user_state,
+                    'step': st.session_state.onboarding_step,
+                    'language': user_language,
+                    'name': user_name
+                }
                 
-                # Check if we actually found relevant information
-                if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
-                    # No relevant knowledge found - show what's available instead
-                    
-                    # Get list of available topics from knowledge base
-                    available_topics = []
-                    kb_path = "data/knowledge_base"
-                    
-                    if os.path.exists(kb_path):
-                        # Get categories (folder names)
-                        categories = [d for d in os.listdir(kb_path) 
-                                    if os.path.isdir(os.path.join(kb_path, d))]
-                        
-                        for category in categories:
-                            # Get file names in each category
-                            cat_path = os.path.join(kb_path, category)
-                            files = [f.replace('.txt', '').replace('.md', '').replace('_', ' ').title() 
-                                   for f in os.listdir(cat_path) 
-                                   if f.endswith(('.txt', '.md', '.json'))]
-                            
-                            if files:
-                                available_topics.append(f"**{category.replace('_', ' ').title()}:** {', '.join(files[:5])}")
-                    
-                    # Build response with available topics
-                    topics_text = "\n".join([f"- {topic}" for topic in available_topics[:4]]) if available_topics else "various trading topics"
-                    
-                    st.session_state.chat_history.append({
-                        "role": "assistant",
-                        "content": f"I don't have specific information about that in my knowledge base.\n\n**But I can help you with:**\n{topics_text}\n\nFor other questions, please contact **support@hmarkets.com** or use our live chat (24/5).\n\nWhat would you like to know?"
-                    })
+                ai_response = process_message(user_input, api_key, rag_system, user_context)
+                st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
                 
-                else:
-                    # We found relevant knowledge - proceed with normal response
-                    
-                    # Build user context
-                    user_context = {
-                        'state': st.session_state.user_state,
-                        'step': st.session_state.onboarding_step,
-                        'language': user_language,
-                        'name': user_name
-                    }
-                    
-                    # Build system prompt
-                    system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
-                    
-                    with st.spinner("🤖 AI Mentor is thinking..."):
-                        response = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=[
-                                {"role": "system", "content": system_prompt},
-                                *st.session_state.chat_history[-10:]
-                            ],
-                            temperature=0.1,
-                            max_tokens=500
-                        )
-                        
-                        assistant_response = response.choices[0].message.content
-                        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-                
-                # Mark processing as complete
-                st.session_state.processing_complete = True
-                
-                # Increment counter AFTER all processing (works for both paths)
+                # Clear input for next message
                 st.session_state.message_counter += 1
-                
+                st.rerun()
+            
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}", icon="⚠️")
-                st.error(f"Error type: {type(e).__name__}")
-                import traceback
-                st.code(traceback.format_exc())
-    
-    # If processing just completed, rerun to show the messages
-    if st.session_state.processing_complete:
-        st.session_state.processing_complete = False
-        st.rerun()
     
     # Action buttons
     st.markdown("<br>", unsafe_allow_html=True)
