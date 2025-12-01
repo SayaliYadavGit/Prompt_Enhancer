@@ -199,13 +199,21 @@ def process_message(user_input, api_key, rag_system, user_context):
     with st.spinner("🔍 Searching your knowledge base..."):
         retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
     
+    # DEBUG: Show what was found (temporary - remove later)
+    if retrieved_knowledge:
+        st.sidebar.info(f"📄 Local files returned {len(retrieved_knowledge)} characters")
+    else:
+        st.sidebar.info("📄 Local files: Nothing found")
+    
     # Track all sources
     all_sources = []
     if sources:
         all_sources.extend(sources)
     
-    # If no local knowledge found, try fetching from hmarkets.com
-    if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
+    # If no local knowledge found OR very little found, try fetching from hmarkets.com
+    # Using stricter threshold (200 chars) to ensure we check website more often
+    if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 200:
+        st.sidebar.warning("🌐 Attempting to fetch from hmarkets.com...")
         try:
             with st.spinner("🌐 Checking hmarkets.com..."):
                 import requests
@@ -246,8 +254,11 @@ def process_message(user_input, api_key, rag_system, user_context):
                 if web_content:
                     retrieved_knowledge = "\n\n".join(web_content)
                     all_sources.append("hmarkets.com")
-        except:
-            pass
+                    st.sidebar.success(f"🌐 Website: Fetched {len(web_content)} pages!")
+                else:
+                    st.sidebar.error("🌐 Website: No content retrieved")
+        except Exception as e:
+            st.sidebar.error(f"🌐 Website error: {str(e)}")
     
     # Check if we found relevant information (from files or website)
     if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
