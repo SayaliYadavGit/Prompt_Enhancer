@@ -368,6 +368,8 @@ if 'last_processed_message' not in st.session_state:
     st.session_state.last_processed_message = ""
 if 'message_counter' not in st.session_state:
     st.session_state.message_counter = 0
+if 'processing_complete' not in st.session_state:
+    st.session_state.processing_complete = False
 
 # Initialize RAG
 try:
@@ -644,17 +646,22 @@ else:
                         assistant_response = response.choices[0].message.content
                         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
                 
+                # Mark processing as complete
+                st.session_state.processing_complete = True
+                
                 # Increment counter AFTER all processing (works for both paths)
                 st.session_state.message_counter += 1
                 
-                # Force rerun to display the new messages
-                st.rerun()
-            
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}", icon="⚠️")
                 st.error(f"Error type: {type(e).__name__}")
                 import traceback
                 st.code(traceback.format_exc())
+    
+    # If processing just completed, rerun to show the messages
+    if st.session_state.processing_complete:
+        st.session_state.processing_complete = False
+        st.rerun()
     
     # Action buttons
     st.markdown("<br>", unsafe_allow_html=True)
