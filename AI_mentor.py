@@ -20,6 +20,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Hide sidebar collapse button - keep sidebar always visible
+st.markdown("""
+    <style>
+    [data-testid="collapsedControl"] {
+        display: none;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # ============================================================================
 # RAG SYSTEM - CHROMADB with Streamlit Cloud Fix
 # ============================================================================
