@@ -620,37 +620,39 @@ else:
                     })
                     st.session_state.last_processed_message = user_input
                     st.rerun()
-                    return
                 
-                # Build user context
-                user_context = {
-                    'state': st.session_state.user_state,
-                    'step': st.session_state.onboarding_step,
-                    'language': user_language,
-                    'name': user_name
-                }
-                
-                # Build system prompt
-                system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
-                
-                with st.spinner("🤖 AI Mentor is thinking..."):
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "system", "content": system_prompt},
-                            *st.session_state.chat_history[-10:]
-                        ],
-                        temperature=0.1,
-                        max_tokens=500
-                    )
+                else:
+                    # We found relevant knowledge - proceed with normal response
                     
-                    assistant_response = response.choices[0].message.content
-                    st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-                
-                # Mark as processed AFTER everything is done
-                st.session_state.last_processed_message = user_input
-                
-                st.rerun()
+                    # Build user context
+                    user_context = {
+                        'state': st.session_state.user_state,
+                        'step': st.session_state.onboarding_step,
+                        'language': user_language,
+                        'name': user_name
+                    }
+                    
+                    # Build system prompt
+                    system_prompt = build_system_prompt(user_context, retrieved_knowledge, sources)
+                    
+                    with st.spinner("🤖 AI Mentor is thinking..."):
+                        response = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=[
+                                {"role": "system", "content": system_prompt},
+                                *st.session_state.chat_history[-10:]
+                            ],
+                            temperature=0.1,
+                            max_tokens=500
+                        )
+                        
+                        assistant_response = response.choices[0].message.content
+                        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+                    
+                    # Mark as processed AFTER everything is done
+                    st.session_state.last_processed_message = user_input
+                    
+                    st.rerun()
             
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}", icon="⚠️")
