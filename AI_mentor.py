@@ -366,6 +366,8 @@ if 'onboarding_step' not in st.session_state:
     st.session_state.onboarding_step = 2
 if 'last_processed_message' not in st.session_state:
     st.session_state.last_processed_message = ""
+if 'message_counter' not in st.session_state:
+    st.session_state.message_counter = 0
 
 # Initialize RAG
 try:
@@ -558,7 +560,7 @@ else:
         user_input = st.text_input(
             "Message",
             placeholder="Ask me anything...",
-            key="chat_input_field",
+            key=f"chat_input_field_{st.session_state.message_counter}",
             label_visibility="collapsed"
         )
     
@@ -571,9 +573,15 @@ else:
             st.error("❌ Please enter your OpenAI API key in the sidebar", icon="🔒")
         else:
             try:
+                # Mark as processed immediately to prevent reprocessing
+                st.session_state.last_processed_message = user_input
+                
+                # Increment counter to clear input field on next render
+                st.session_state.message_counter += 1
+                
                 client = OpenAI(api_key=api_key)
                 
-                # Add user message first
+                # Add user message to history
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
                 # RAG: Retrieve relevant knowledge
@@ -610,7 +618,6 @@ else:
                         "role": "assistant",
                         "content": f"I don't have specific information about that in my knowledge base.\n\n**But I can help you with:**\n{topics_text}\n\nFor other questions, please contact **support@hmarkets.com** or use our live chat (24/5).\n\nWhat would you like to know?"
                     })
-                    st.session_state.last_processed_message = user_input
                     st.rerun()
                 
                 else:
@@ -641,9 +648,6 @@ else:
                         assistant_response = response.choices[0].message.content
                         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
                     
-                    # Mark as processed AFTER everything is done
-                    st.session_state.last_processed_message = user_input
-                    
                     st.rerun()
             
             except Exception as e:
@@ -655,28 +659,17 @@ else:
     # Action buttons
     st.markdown("<br>", unsafe_allow_html=True)
     
-    col_clear, col_export, col_back = st.columns(3)
-    
-    with col_clear:
-        if st.button("🗑️ Clear Chat", use_container_width=True):
-            st.session_state.chat_history = []
-            st.session_state.conversation_started = False
-            st.rerun()
-    
-    with col_export:
-        if st.session_state.chat_history:
-            chat_export = json.dumps(st.session_state.chat_history, indent=2)
-            st.download_button(
-                label="📥 Export",
-                data=chat_export,
-                file_name=f"hantec_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                mime="application/json",
-                use_container_width=True
-            )
+    col_back, col_clear = st.columns(2)
     
     with col_back:
         if st.button("← Back", use_container_width=True):
             st.session_state.conversation_started = False
+            st.rerun()
+    
+    with col_clear:
+        if st.button("🗑️ Clear Chat", use_container_width=True):
+            st.session_state.chat_history = []
+            st.session_state.last_processed_message = ""
             st.rerun()
 
 # Footer
