@@ -351,12 +351,6 @@ with st.sidebar:
     st.caption("✓ Temperature: 0.1")
     st.caption("✓ Max Tokens: 500")
     st.caption("✓ RAG: ChromaDB")
-    
-    st.markdown("---")
-    
-    st.markdown("### 📚 Quick Links")
-    st.markdown("- [Trading Guide](https://hmarkets.com/guide)")
-    st.markdown("- [Support](https://hmarkets.com/support)")
 
 # Initialize session state
 if 'conversation_started' not in st.session_state:
@@ -402,11 +396,13 @@ if not st.session_state.conversation_started:
                         flex-direction: column; justify-content: space-between;">
                 <div>
                     <div style="font-size: 40px; margin-bottom: 20px;">🚀</div>
-                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">
                         Start Live Trading
                     </div>
-                    <div style="font-size: 15px; line-height: 1.6; opacity: 0.95;">
-                        Tell me your goal and account preferences — I'll set up your account to start trading
+                    <div style="font-size: 15px; line-height: 2; opacity: 0.95;">
+                        📊 Set up your account<br>
+                        💰 Make your first deposit<br>
+                        🎯 Start trading CFDs
                     </div>
                 </div>
                 <div style="text-align: right; font-size: 32px; opacity: 0.8; margin-top: 20px;">→</div>
@@ -458,11 +454,13 @@ if not st.session_state.conversation_started:
                         display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
                     <div style="font-size: 40px; margin-bottom: 20px;">💬</div>
-                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1a202c;">
+                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1a202c;">
                         Take a Quick Tour
                     </div>
-                    <div style="font-size: 15px; color: #64748b; line-height: 1.6;">
-                        A quick walkthrough of your dashboard, features and charts
+                    <div style="font-size: 15px; color: #64748b; line-height: 2;">
+                        🗺️ Dashboard walkthrough<br>
+                        📈 Features overview<br>
+                        📊 Charts and tools
                     </div>
                 </div>
                 <div style="text-align: right; font-size: 32px; color: #cbd5e0; margin-top: 20px;">→</div>
