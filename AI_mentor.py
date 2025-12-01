@@ -616,12 +616,6 @@ else:
                         "content": f"I don't have specific information about that in my knowledge base.\n\n**But I can help you with:**\n{topics_text}\n\nFor other questions, please contact **support@hmarkets.com** or use our live chat (24/5).\n\nWhat would you like to know?"
                     })
                 
-                # Increment counter AFTER all processing (works for both paths)
-                st.session_state.message_counter += 1
-                
-                # Force rerun to display the new messages
-                st.rerun()
-                
                 else:
                     # We found relevant knowledge - proceed with normal response
                     
@@ -649,6 +643,12 @@ else:
                         
                         assistant_response = response.choices[0].message.content
                         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+                
+                # Increment counter AFTER all processing (works for both paths)
+                st.session_state.message_counter += 1
+                
+                # Force rerun to display the new messages
+                st.rerun()
             
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}", icon="⚠️")
