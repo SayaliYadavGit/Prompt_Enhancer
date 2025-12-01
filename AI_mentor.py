@@ -576,9 +576,6 @@ else:
                 # Mark as processed immediately to prevent reprocessing
                 st.session_state.last_processed_message = user_input
                 
-                # Increment counter to clear input field on next render
-                st.session_state.message_counter += 1
-                
                 client = OpenAI(api_key=api_key)
                 
                 # Add user message to history
@@ -618,6 +615,9 @@ else:
                         "role": "assistant",
                         "content": f"I don't have specific information about that in my knowledge base.\n\n**But I can help you with:**\n{topics_text}\n\nFor other questions, please contact **support@hmarkets.com** or use our live chat (24/5).\n\nWhat would you like to know?"
                     })
+                    
+                    # Increment counter to clear input field on next render
+                    st.session_state.message_counter += 1
                     st.rerun()
                 
                 else:
@@ -648,6 +648,8 @@ else:
                         assistant_response = response.choices[0].message.content
                         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
                     
+                    # Increment counter to clear input field on next render
+                    st.session_state.message_counter += 1
                     st.rerun()
             
             except Exception as e:
