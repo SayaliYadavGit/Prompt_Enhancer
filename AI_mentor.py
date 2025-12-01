@@ -500,13 +500,6 @@ if not st.session_state.conversation_started:
             st.session_state.selected_option = "general"
             st.session_state.chat_history = [{"role": "user", "content": welcome_input}]
             st.rerun()
-    
-    st.markdown("""
-        <div style="text-align: center; margin-top: 16px; font-size: 13px; color: #94a3b8;">
-            All chats are private & encrypted. Hpulse may make mistakes — verify 
-            <a href="https://hmarkets.com/risk" style="color: #3b82f6; text-decoration: none;">Key Info ↗</a>
-        </div>
-    """, unsafe_allow_html=True)
 
 else:
     # ==================== CONVERSATION INTERFACE ====================
