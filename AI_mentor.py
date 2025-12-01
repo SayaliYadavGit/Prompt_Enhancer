@@ -16,7 +16,8 @@ import glob
 st.set_page_config(
     page_title="Hantec AI Mentor",
     page_icon="🤖",
-    layout="wide"
+    layout="centered",
+    initial_sidebar_state="expanded"
 )
 
 # ============================================================================
@@ -395,9 +396,9 @@ if not st.session_state.conversation_started:
                         box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2); display: flex;
                         flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div style="font-size: 40px; margin-bottom: 20px;">🚀</div>
-                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">
-                        Start Live Trading
+                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                        <div style="font-size: 40px; margin-right: 12px;">🚀</div>
+                        <div style="font-size: 24px; font-weight: 600;">Start Live Trading</div>
                     </div>
                     <div style="font-size: 15px; line-height: 2; opacity: 0.95;">
                         📊 Set up your account<br>
@@ -424,9 +425,9 @@ if not st.session_state.conversation_started:
                         box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
                         display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div style="font-size: 40px; margin-bottom: 20px;">📚</div>
-                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1a202c;">
-                        Learn CFDs
+                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                        <div style="font-size: 40px; margin-right: 12px;">📚</div>
+                        <div style="font-size: 24px; font-weight: 600; color: #1a202c;">Learn CFDs</div>
                     </div>
                     <div style="font-size: 15px; color: #64748b; line-height: 2;">
                         📊 Master the fundamentals<br>
@@ -453,9 +454,9 @@ if not st.session_state.conversation_started:
                         box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
                         display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div style="font-size: 40px; margin-bottom: 20px;">💬</div>
-                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1a202c;">
-                        Take a Quick Tour
+                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                        <div style="font-size: 40px; margin-right: 12px;">💬</div>
+                        <div style="font-size: 24px; font-weight: 600; color: #1a202c;">Take a Quick Tour</div>
                     </div>
                     <div style="font-size: 15px; color: #64748b; line-height: 2;">
                         🗺️ Dashboard walkthrough<br>
