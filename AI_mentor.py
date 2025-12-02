@@ -254,37 +254,31 @@ def process_message(user_input, api_key, rag_system, user_context):
                     if response.status_code == 200:
                         soup = BeautifulSoup(response.content, 'html.parser')
                         
-                        # Try to find main content areas
-                        main_content = soup.find('main') or soup.find('article') or soup.find('div', class_='content') or soup.body
+                        # Remove unwanted elements
+                        for element in soup(["script", "style", "nav", "footer", "header", "iframe", "noscript"]):
+                            element.decompose()
                         
-                        if main_content:
-                            # Extract main content (remove scripts, styles, nav, footer)
-                            for element in main_content(["script", "style", "nav", "footer", "header"]):
-                                element.decompose()
-                            
-                            text = main_content.get_text()
-                            # Clean up whitespace
-                            lines = (line.strip() for line in text.splitlines())
-                            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-                            text = ' '.join(chunk for chunk in chunks if chunk)
-                            
-                            if len(text) > 100:
-                                web_content.append(text[:4000])
-                                successful_urls.append(url)
-                                st.session_state.debug_info.append(f"  ✓ {url.split('/')[-2]}: {len(text)} chars")
-                            else:
-                                failed_urls.append(f"{url} (too short: {len(text)} chars)")
-                                st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2]}: too short")
+                        # Get ALL text from the page
+                        text = soup.get_text(separator=' ', strip=True)
+                        
+                        # Clean up whitespace
+                        text = ' '.join(text.split())
+                        
+                        # Be less strict - accept anything over 50 characters
+                        if len(text) > 50:
+                            web_content.append(text[:5000])  # Take more content
+                            successful_urls.append(url)
+                            st.session_state.debug_info.append(f"  ✓ {url.split('/')[-2] or 'homepage'}: {len(text)} chars")
                         else:
-                            failed_urls.append(f"{url} (no content)")
-                            st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2]}: no content")
+                            failed_urls.append(f"{url} (only {len(text)} chars)")
+                            st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2] or 'homepage'}: only {len(text)} chars")
                     else:
                         failed_urls.append(f"{url} (status {response.status_code})")
-                        st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2]}: status {response.status_code}")
+                        st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2] or 'homepage'}: status {response.status_code}")
                         
                 except Exception as e:
                     failed_urls.append(f"{url} (error: {str(e)[:50]})")
-                    st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2]}: {str(e)[:50]}")
+                    st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2] or 'homepage'}: {str(e)[:50]}")
                     continue
             
             st.session_state.debug_info.append(f"✅ Success: {len(successful_urls)} pages")
