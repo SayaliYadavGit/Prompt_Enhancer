@@ -550,9 +550,9 @@ if not st.session_state.conversation_started:
 else:
     # ==================== CONVERSATION INTERFACE ====================
     
-    # Check if this is "Start Live Trading" - use conversational flow
-    if st.session_state.selected_option == "start_trading" and CONVERSATION_FLOW_AVAILABLE:
-        st.markdown("### 🚀 Start Live Trading")
+    # Check if this is "Learn CFDs" - use conversational flow
+    if st.session_state.selected_option == "learn_cfds" and CONVERSATION_FLOW_AVAILABLE:
+        st.markdown("### 📚 Learn CFDs - Personalized Learning Path")
         st.markdown("---")
         
         # Render conversational flow instead of regular chat
