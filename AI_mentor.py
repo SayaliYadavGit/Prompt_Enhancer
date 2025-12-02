@@ -195,112 +195,102 @@ def process_message(user_input, api_key, rag_system, user_context):
     """Process user message and get AI response"""
     client = OpenAI(api_key=api_key)
     
-    # Initialize debug info in session state
-    if 'debug_info' not in st.session_state:
-        st.session_state.debug_info = []
-    
-    # Clear previous debug for new message
-    st.session_state.debug_info = []
-    
     # RAG: Retrieve relevant knowledge from local files
     with st.spinner("🔍 Searching your knowledge base..."):
         retrieved_knowledge, sources = rag_system.retrieve(user_input, n_results=3)
-    
-    # Store debug info
-    if retrieved_knowledge:
-        st.session_state.debug_info.append(f"📄 Local files: {len(retrieved_knowledge)} characters")
-    else:
-        st.session_state.debug_info.append("📄 Local files: Nothing found")
     
     # Track all sources
     all_sources = []
     if sources:
         all_sources.extend(sources)
     
-    # ALWAYS try fetching from hmarkets.com to supplement local knowledge
-    st.session_state.debug_info.append("🌐 Fetching from hmarkets.com...")
-    web_content_fetched = False
-    try:
-        with st.spinner("🌐 Checking hmarkets.com..."):
-            import requests
-            from bs4 import BeautifulSoup
-            
-            # Specific pages to check on hmarkets.com
-            search_urls = [
-                "https://hmarkets.com/trading-platforms/mt4-trading-platform/",
-                "https://hmarkets.com/trading-platforms/metatrader-5/",
-                "https://hmarkets.com/trading-platforms/hantec-social/",
-                "https://hmarkets.com/trading-platforms/hantec-markets-mobile-app/",
-                "https://hmarkets.com/trading-platforms/client-portal/",
-                "https://hmarkets.com/trading-platforms/hantec-markets-web-trader/",
-                "https://hmarkets.com/tools/market-analysis/",
-                "https://hmarkets.com/"
-            ]
-            
-            web_content = []
-            successful_urls = []
-            failed_urls = []
-            
-            for url in search_urls:
-                try:
-                    response = requests.get(
-                        url, 
-                        timeout=5, 
-                        headers={
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                        }
-                    )
-                    
-                    if response.status_code == 200:
-                        soup = BeautifulSoup(response.content, 'html.parser')
+    # If no local knowledge found, try fetching from hmarkets.com
+    if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 100:
+        try:
+            with st.spinner("🌐 Checking hmarkets.com..."):
+                import requests
+                from bs4 import BeautifulSoup
+                
+                # Key pages to check for demo
+                search_urls = [
+                    "https://hmarkets.com/trading-platforms/mt4-trading-platform/",
+                    "https://hmarkets.com/trading-platforms/metatrader-5/",
+                    "https://hmarkets.com/trading-platforms/hantec-social/",
+                    "https://hmarkets.com/tools/market-analysis/",
+                    "https://hmarkets.com/"
+                ]
+                
+                web_content = []
+                for url in search_urls:
+                    try:
+                        response = requests.get(
+                            url, 
+                            timeout=5, 
+                            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                        )
                         
-                        # Remove unwanted elements
-                        for element in soup(["script", "style", "nav", "footer", "header", "iframe", "noscript"]):
-                            element.decompose()
-                        
-                        # Get ALL text from the page
-                        text = soup.get_text(separator=' ', strip=True)
-                        
-                        # Clean up whitespace
-                        text = ' '.join(text.split())
-                        
-                        # Be less strict - accept anything over 50 characters
-                        if len(text) > 50:
-                            web_content.append(text[:5000])  # Take more content
-                            successful_urls.append(url)
-                            st.session_state.debug_info.append(f"  ✓ {url.split('/')[-2] or 'homepage'}: {len(text)} chars")
-                        else:
-                            failed_urls.append(f"{url} (only {len(text)} chars)")
-                            st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2] or 'homepage'}: only {len(text)} chars")
-                    else:
-                        failed_urls.append(f"{url} (status {response.status_code})")
-                        st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2] or 'homepage'}: status {response.status_code}")
-                        
-                except Exception as e:
-                    failed_urls.append(f"{url} (error: {str(e)[:50]})")
-                    st.session_state.debug_info.append(f"  ✗ {url.split('/')[-2] or 'homepage'}: {str(e)[:50]}")
-                    continue
-            
-            st.session_state.debug_info.append(f"✅ Success: {len(successful_urls)} pages")
-            st.session_state.debug_info.append(f"❌ Failed: {len(failed_urls)} pages")
-            
-            if web_content:
-                # Combine website content with local knowledge
-                if retrieved_knowledge:
-                    retrieved_knowledge = retrieved_knowledge + "\n\n=== WEBSITE CONTENT ===\n\n" + "\n\n".join(web_content)
-                else:
+                        if response.status_code == 200:
+                            soup = BeautifulSoup(response.content, 'html.parser')
+                            
+                            # Remove unwanted elements
+                            for element in soup(["script", "style", "nav", "footer", "header"]):
+                                element.decompose()
+                            
+                            # Get all text
+                            text = soup.get_text(separator=' ', strip=True)
+                            text = ' '.join(text.split())
+                            
+                            if len(text) > 100:
+                                web_content.append(text[:5000])
+                    except:
+                        continue
+                
+                if web_content:
                     retrieved_knowledge = "\n\n".join(web_content)
-                
-                all_sources.append("hmarkets.com")
-                web_content_fetched = True
-                st.session_state.debug_info.append(f"🌐 Total: {len(''.join(web_content))} characters from website")
-            else:
-                st.session_state.debug_info.append("🌐 No content retrieved from any URL")
-                
-    except Exception as e:
-        st.session_state.debug_info.append(f"🌐 Error: {str(e)}")
-        import traceback
-        st.session_state.debug_info.append(f"Traceback: {traceback.format_exc()[:200]}")
+                    all_sources.append("hmarkets.com")
+        except:
+            pass
+    
+    # Check if we found relevant information (from files or website)
+    if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
+        # No relevant knowledge found anywhere
+        available_topics = get_available_topics()
+        topics_text = "\n".join([f"- {topic}" for topic in available_topics[:4]]) if available_topics else "various trading topics"
+        
+        response = f"I don't have specific information about that in my knowledge base.\n\n**But I can help you with:**\n{topics_text}\n\nFor other questions, please contact **support@hmarkets.com** or use our live chat (24/5).\n\nWhat would you like to know?"
+        
+        return response
+    
+    # Build system prompt and get AI response
+    system_prompt = build_system_prompt(user_context, retrieved_knowledge, all_sources)
+    
+    with st.spinner("🤖 AI Mentor is thinking..."):
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                *st.session_state.chat_history[-10:]
+            ],
+            temperature=0.1,
+            max_tokens=500
+        )
+        
+        ai_response = response.choices[0].message.content
+        
+        # Add source attribution at the bottom
+        if all_sources:
+            # Remove duplicates
+            unique_sources = []
+            seen = set()
+            for s in all_sources:
+                if s not in seen:
+                    unique_sources.append(s)
+                    seen.add(s)
+            
+            source_text = "\n\n---\n📚 **Source:** " + ", ".join(unique_sources)
+            ai_response += source_text
+        
+        return ai_response
     
     # Check if we found relevant information (from files or website)
     if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
@@ -467,17 +457,7 @@ with st.sidebar:
     st.caption("✓ Temperature: 0.1")
     st.caption("✓ Max Tokens: 500")
     st.caption("✓ RAG: ChromaDB")
-    
-    st.markdown("---")
-    
-    # Debug section - shows persistent info
-    st.markdown("### 🔍 Debug Info (Last Query)")
-    if 'debug_info' in st.session_state and st.session_state.debug_info:
-        with st.expander("Click to see details", expanded=False):
-            for info in st.session_state.debug_info:
-                st.caption(info)
-    else:
-        st.caption("No debug info yet. Ask a question to see details.")
+    st.caption("✓ Web Fallback: Enabled")
 
 # Initialize session state
 if 'conversation_started' not in st.session_state:
