@@ -1,14 +1,11 @@
 """
-Hantec AI Mentor - Cleaned & Optimized Version
-RAG Implementation with ChromaDB + Web Scraping
+Hantec AI Mentor - RAG Implementation with ChromaDB
 """
 
 from openai import OpenAI
 import streamlit as st
 import os
 import glob
-import requests
-from bs4 import BeautifulSoup
 
 # ============================================================================
 # PAGE CONFIG
@@ -204,56 +201,9 @@ def process_message(user_input, api_key, rag_system, user_context):
     if sources:
         all_sources.extend(sources)
     
-    # If no local knowledge found, try fetching from hmarkets.com
-    if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 100:
-        try:
-            with st.spinner("🌐 Checking hmarkets.com..."):
-                import requests
-                from bs4 import BeautifulSoup
-                
-                # Key pages to check for demo
-                search_urls = [
-                    "https://hmarkets.com/trading-platforms/mt4-trading-platform/",
-                    "https://hmarkets.com/trading-platforms/metatrader-5/",
-                    "https://hmarkets.com/trading-platforms/hantec-social/",
-                    "https://hmarkets.com/tools/market-analysis/",
-                    "https://hmarkets.com/"
-                ]
-                
-                web_content = []
-                for url in search_urls:
-                    try:
-                        response = requests.get(
-                            url, 
-                            timeout=5, 
-                            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-                        )
-                        
-                        if response.status_code == 200:
-                            soup = BeautifulSoup(response.content, 'html.parser')
-                            
-                            # Remove unwanted elements
-                            for element in soup(["script", "style", "nav", "footer", "header"]):
-                                element.decompose()
-                            
-                            # Get all text
-                            text = soup.get_text(separator=' ', strip=True)
-                            text = ' '.join(text.split())
-                            
-                            if len(text) > 100:
-                                web_content.append(text[:5000])
-                    except:
-                        continue
-                
-                if web_content:
-                    retrieved_knowledge = "\n\n".join(web_content)
-                    all_sources.append("hmarkets.com")
-        except:
-            pass
-    
-    # Check if we found relevant information (from files or website)
+    # Check if we found relevant information
     if not retrieved_knowledge or len(retrieved_knowledge.strip()) < 50:
-        # No relevant knowledge found anywhere
+        # No relevant knowledge found
         available_topics = get_available_topics()
         topics_text = "\n".join([f"- {topic}" for topic in available_topics[:4]]) if available_topics else "various trading topics"
         
@@ -454,10 +404,10 @@ with st.sidebar:
     st.markdown("---")
     
     st.markdown("### ⚙️ AI Settings")
+    st.caption("✓ Model: GPT-4o-mini")
     st.caption("✓ Temperature: 0.1")
     st.caption("✓ Max Tokens: 500")
     st.caption("✓ RAG: ChromaDB")
-    st.caption("✓ Web Fallback: Enabled")
 
 # Initialize session state
 if 'conversation_started' not in st.session_state:
