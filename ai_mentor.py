@@ -7,6 +7,14 @@ import streamlit as st
 import os
 import glob
 
+# Import conversation flow module
+try:
+    from conversation_flow import render_conversation_flow
+    CONVERSATION_FLOW_AVAILABLE = True
+except ImportError:
+    CONVERSATION_FLOW_AVAILABLE = False
+    st.error("⚠️ conversation_flow.py not found. Conversational flow disabled.")
+
 # ============================================================================
 # PAGE CONFIG
 # ============================================================================
@@ -542,80 +550,98 @@ if not st.session_state.conversation_started:
 else:
     # ==================== CONVERSATION INTERFACE ====================
     
-    thread_titles = {
-        "start_trading": "Start Live Trading",
-        "learn_cfds": "Learn CFDs",
-        "take_tour": "Take a Quick Tour",
-        "general": "Getting started!"
-    }
-    
-    thread_title = thread_titles.get(st.session_state.selected_option, "Chat")
-    st.markdown(f"### {thread_title}")
-    
-    # Display chat history
-    for msg in st.session_state.chat_history:
-        render_message(msg, user_name)
-    
-    # Chat input
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    col_input, col_mic = st.columns([20, 1])
-    
-    with col_input:
-        user_input = st.text_input(
-            "Message",
-            placeholder="Ask me anything...",
-            key=f"chat_input_field_{st.session_state.message_counter}",
-            label_visibility="collapsed"
-        )
-    
-    with col_mic:
-        st.markdown("<div style='padding-top: 8px; font-size: 20px; color: #94a3b8;'>🎤</div>", unsafe_allow_html=True)
-    
-    # Process chat input
-    if user_input and user_input != st.session_state.last_processed_message:
-        if not api_key:
-            st.error("❌ Please enter your OpenAI API key in the sidebar", icon="🔒")
-        else:
-            try:
-                st.session_state.last_processed_message = user_input
-                
-                # Add user message
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
-                
-                # Get AI response
-                user_context = {
-                    'state': st.session_state.user_state,
-                    'step': st.session_state.onboarding_step,
-                    'language': user_language,
-                    'name': user_name
-                }
-                
-                ai_response = process_message(user_input, api_key, rag_system, user_context)
-                st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
-                
-                # Clear input for next message
-                st.session_state.message_counter += 1
-                st.rerun()
-            
-            except Exception as e:
-                st.error(f"❌ Error: {str(e)}", icon="⚠️")
-    
-    # Action buttons
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    col_back, col_clear = st.columns(2)
-    
-    with col_back:
-        if st.button("← Back", use_container_width=True):
+    # Check if this is "Start Live Trading" - use conversational flow
+    if st.session_state.selected_option == "start_trading" and CONVERSATION_FLOW_AVAILABLE:
+        st.markdown("### 🚀 Start Live Trading")
+        st.markdown("---")
+        
+        # Render conversational flow instead of regular chat
+        render_conversation_flow(api_key)
+        
+        st.markdown("---")
+        
+        # Back button
+        if st.button("← Back to Home", key="back_from_flow"):
             st.session_state.conversation_started = False
+            st.session_state.selected_option = None
             st.rerun()
     
-    with col_clear:
-        if st.button("🗑️ Clear Chat", use_container_width=True):
-            st.session_state.chat_history = []
-            st.session_state.last_processed_message = ""
-            st.rerun()
+    else:
+        # Regular chat interface for other options
+        thread_titles = {
+            "start_trading": "Start Live Trading",
+            "learn_cfds": "Learn CFDs",
+            "take_tour": "Take a Quick Tour",
+            "general": "Getting started!"
+        }
+        
+        thread_title = thread_titles.get(st.session_state.selected_option, "Chat")
+        st.markdown(f"### {thread_title}")
+        
+        # Display chat history
+        for msg in st.session_state.chat_history:
+            render_message(msg, user_name)
+        
+        # Chat input
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col_input, col_mic = st.columns([20, 1])
+        
+        with col_input:
+            user_input = st.text_input(
+                "Message",
+                placeholder="Ask me anything...",
+                key=f"chat_input_field_{st.session_state.message_counter}",
+                label_visibility="collapsed"
+            )
+        
+        with col_mic:
+            st.markdown("<div style='padding-top: 8px; font-size: 20px; color: #94a3b8;'>🎤</div>", unsafe_allow_html=True)
+        
+        # Process chat input
+        if user_input and user_input != st.session_state.last_processed_message:
+            if not api_key:
+                st.error("❌ Please enter your OpenAI API key in the sidebar", icon="🔒")
+            else:
+                try:
+                    st.session_state.last_processed_message = user_input
+                    
+                    # Add user message
+                    st.session_state.chat_history.append({"role": "user", "content": user_input})
+                    
+                    # Get AI response
+                    user_context = {
+                        'state': st.session_state.user_state,
+                        'step': st.session_state.onboarding_step,
+                        'language': user_language,
+                        'name': user_name
+                    }
+                    
+                    ai_response = process_message(user_input, api_key, rag_system, user_context)
+                    st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
+                    
+                    # Clear input for next message
+                    st.session_state.message_counter += 1
+                    st.rerun()
+                
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}", icon="⚠️")
+        
+        # Action buttons
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col_back, col_clear = st.columns(2)
+        
+        with col_back:
+            if st.button("← Back", use_container_width=True):
+                st.session_state.conversation_started = False
+                st.rerun()
+        
+        with col_clear:
+            if st.button("🗑️ Clear Chat", use_container_width=True):
+                st.session_state.chat_history = []
+                st.session_state.last_processed_message = ""
+                st.rerun()
 
 # Footer
 st.markdown("---")
