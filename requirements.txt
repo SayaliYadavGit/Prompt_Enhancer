@@ -2,5 +2,3 @@ streamlit
 openai
 chromadb
 onnxruntime
-requests
-beautifulsoup4
