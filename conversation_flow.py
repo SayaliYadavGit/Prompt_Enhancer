@@ -131,17 +131,178 @@ class ConversationPaths:
     """Define conversation paths based on user profile"""
     
     @staticmethod
-    def determine_path(profile):
-        """Determine which conversation path to follow"""
-        experience = profile.get('trading_experience', '').lower()
+    def get_learning_plan(profile):
+        """Get comprehensive learning plan based on experience level"""
+        path = ConversationPaths.determine_path(profile)
+        risk = profile.get('risk_tolerance', 'Medium').lower()
+        goal = profile.get('investment_goal', 'Both').lower()
         
-        if 'beginner' in experience:
-            return 'beginner'
-        elif 'knowledge' in experience:
-            return 'intermediate'
-        elif 'experienced' in experience:
-            return 'advanced'
-        return 'beginner'  # Default
+        learning_plans = {
+            'beginner': {
+                'title': '🎓 Your Personalized Learning Journey',
+                'duration': '2-4 weeks',
+                'modules': [
+                    {
+                        'week': 'Week 1: Foundations',
+                        'topics': [
+                            '📖 What are CFDs? (Contract for Difference)',
+                            '💰 Understanding leverage and margin',
+                            '📊 How to read price charts',
+                            '🎯 Basic trading terminology',
+                            '⚠️ Risk management basics'
+                        ],
+                        'time': '30 minutes/day',
+                        'action': '[Start Week 1 →](https://hmarkets.com/education/basics)'
+                    },
+                    {
+                        'week': 'Week 2: Platform Training',
+                        'topics': [
+                            '💻 MT4/MT5 platform walkthrough',
+                            '📱 Mobile app features',
+                            '📈 Placing your first order (demo)',
+                            '🛡️ Setting stop-loss & take-profit',
+                            '📊 Understanding order types'
+                        ],
+                        'time': '45 minutes/day',
+                        'action': '[Open Demo Account →](https://hmarkets.com/demo)'
+                    },
+                    {
+                        'week': 'Week 3: Strategy & Practice',
+                        'topics': [
+                            '📊 Technical analysis basics',
+                            '📰 Fundamental analysis intro',
+                            '🎯 Simple trading strategies',
+                            '💡 Practice with demo account',
+                            '📝 Keeping a trading journal'
+                        ],
+                        'time': '1 hour/day',
+                        'action': '[Practice Strategies →](https://hmarkets.com/education/strategies)'
+                    },
+                    {
+                        'week': 'Week 4: Going Live',
+                        'topics': [
+                            '💰 Making your first deposit',
+                            '🎯 Starting with small positions',
+                            '📊 Your first real trade',
+                            '🛡️ Risk management in practice',
+                            '📈 Tracking your progress'
+                        ],
+                        'time': 'Start small',
+                        'action': '[Fund Account →](https://hmarkets.com/deposit)'
+                    }
+                ],
+                'resources': [
+                    '📚 [Trading Glossary](https://hmarkets.com/glossary)',
+                    '🎥 [Video Tutorials](https://hmarkets.com/videos)',
+                    '💬 [Community Forum](https://hmarkets.com/community)',
+                    '📧 [Weekly Newsletter](https://hmarkets.com/newsletter)'
+                ],
+                'tips': [
+                    '💡 Start with demo account - practice until confident',
+                    '⚠️ Never risk more than 1-2% of capital per trade',
+                    '📊 Focus on learning, not just profit',
+                    '🎯 Set realistic expectations - trading is a skill'
+                ]
+            },
+            'intermediate': {
+                'title': '🚀 Accelerated Trading Program',
+                'duration': '1-2 weeks',
+                'modules': [
+                    {
+                        'week': 'Days 1-3: Platform Mastery',
+                        'topics': [
+                            '💻 Hantec platform features',
+                            '📊 Advanced order types',
+                            '🛡️ Risk management tools',
+                            '📱 Trading on mobile',
+                            '🔔 Setting up alerts'
+                        ],
+                        'time': '2-3 hours',
+                        'action': '[Platform Guide →](https://hmarkets.com/platforms)'
+                    },
+                    {
+                        'week': 'Days 4-7: Strategy Refinement',
+                        'topics': [
+                            '📈 Technical indicators deep dive',
+                            '📊 Chart patterns recognition',
+                            '🎯 Backtesting strategies',
+                            '💡 Position sizing',
+                            '📝 Trade planning'
+                        ],
+                        'time': '3-4 hours',
+                        'action': '[Advanced Strategies →](https://hmarkets.com/education/advanced)'
+                    },
+                    {
+                        'week': 'Week 2: Live Trading',
+                        'topics': [
+                            '💰 Fund your account',
+                            '🎯 Start with tested strategies',
+                            '📊 Monitor and adjust',
+                            '📈 Scale gradually',
+                            '🛡️ Refine risk management'
+                        ],
+                        'time': 'Active trading',
+                        'action': '[Start Trading →](https://hmarkets.com/trading-platform)'
+                    }
+                ],
+                'resources': [
+                    '📊 [Market Analysis](https://hmarkets.com/tools/market-analysis)',
+                    '🔔 [Trading Signals](https://hmarkets.com/signals)',
+                    '📈 [Economic Calendar](https://hmarkets.com/calendar)',
+                    '💬 [Trading Community](https://hmarkets.com/community)'
+                ],
+                'tips': [
+                    '💡 Review your past trades - learn from mistakes',
+                    '⚠️ Don\'t overtrade - quality over quantity',
+                    '📊 Use stop losses on every trade',
+                    '🎯 Keep emotions in check - stick to your plan'
+                ]
+            },
+            'advanced': {
+                'title': '⚡ Advanced Trader Setup',
+                'duration': '2-3 days',
+                'modules': [
+                    {
+                        'week': 'Day 1: Account Setup',
+                        'topics': [
+                            '⚡ Complete verification quickly',
+                            '💰 Fund your account',
+                            '🔧 Configure platform settings',
+                            '📊 Set up charts & indicators',
+                            '🔔 Custom alerts & notifications'
+                        ],
+                        'time': '1-2 hours',
+                        'action': '[Account Setup →](https://hmarkets.com/account)'
+                    },
+                    {
+                        'week': 'Day 2-3: Advanced Features',
+                        'topics': [
+                            '🤖 Algorithmic trading setup',
+                            '📊 Advanced charting tools',
+                            '🔍 Market depth & liquidity',
+                            '💡 Copy trading features',
+                            '📈 Portfolio management tools'
+                        ],
+                        'time': '2-3 hours',
+                        'action': '[Advanced Tools →](https://hmarkets.com/tools/advanced)'
+                    }
+                ],
+                'resources': [
+                    '🤖 [Algo Trading](https://hmarkets.com/algo-trading)',
+                    '📊 [InsightPro Analysis](https://hmarkets.com/tools/market-analysis)',
+                    '💼 [Portfolio Tools](https://hmarkets.com/portfolio)',
+                    '📱 [API Documentation](https://hmarkets.com/api)'
+                ],
+                'tips': [
+                    '💡 Leverage your experience but respect new platform',
+                    '⚠️ Test strategies with small positions first',
+                    '📊 Explore Hantec\'s unique features',
+                    '🎯 Connect with account manager for VIP features'
+                ]
+            }
+        }
+        
+        return learning_plans.get(path, learning_plans['beginner'])
     
     @staticmethod
     def get_path_greeting(profile):
@@ -431,7 +592,7 @@ class ConversationFlowManager:
                     st.rerun()
     
     def render_path_summary(self):
-        """Render personalized path summary after profiling"""
+        """Render personalized learning plan after profiling"""
         profile = self.state.get_profile()
         
         # Determine path
@@ -439,51 +600,87 @@ class ConversationFlowManager:
         self.state.update_profile('conversation_path', path)
         self.state.update_profile('profiling_complete', True)
         
-        # Get personalized greeting
-        greeting = ConversationPaths.get_path_greeting(profile)
-        st.markdown(greeting)
+        # Show profile summary
+        st.markdown("## ✅ Profile Complete!")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Experience", profile.get('trading_experience', 'N/A'))
+        with col2:
+            st.metric("Goal", profile.get('investment_goal', 'N/A'))
+        with col3:
+            st.metric("Risk Tolerance", profile.get('risk_tolerance', 'N/A'))
         
         st.markdown("---")
         
-        # Get next action based on onboarding step
-        next_action = ConversationPaths.get_next_action(profile)
+        # Get and display learning plan
+        learning_plan = ConversationPaths.get_learning_plan(profile)
         
-        st.markdown(f"### 🎯 Your Next Step: {next_action['title']}")
-        st.markdown(f"**What:** {next_action['description']}")
-        st.markdown(f"**Why:** {next_action['why']}")
-        st.markdown(f"**Time:** {next_action['time']}")
+        st.markdown(f"## {learning_plan['title']}")
+        st.markdown(f"**⏱️ Estimated Duration:** {learning_plan['duration']}")
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Action buttons
-        col1, col2 = st.columns(2)
+        # Display learning modules
+        for idx, module in enumerate(learning_plan['modules'], 1):
+            with st.expander(f"📖 {module['week']}", expanded=(idx==1)):
+                st.markdown(f"**⏰ Time Commitment:** {module['time']}")
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                st.markdown("**📚 What You'll Learn:**")
+                for topic in module['topics']:
+                    st.markdown(f"- {topic}")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown(module['action'])
+        
+        st.markdown("---")
+        
+        # Learning resources
+        st.markdown("### 📚 Learning Resources")
+        cols = st.columns(2)
+        for idx, resource in enumerate(learning_plan['resources']):
+            with cols[idx % 2]:
+                st.markdown(resource)
+        
+        st.markdown("---")
+        
+        # Pro tips
+        st.markdown("### 💡 Pro Tips for Success")
+        for tip in learning_plan['tips']:
+            st.markdown(tip)
+        
+        st.markdown("---")
+        
+        # Current onboarding status & next action
+        st.markdown("## 🎯 Your Next Immediate Action")
+        
+        next_action = ConversationPaths.get_next_action(profile)
+        
+        col1, col2 = st.columns([2, 1])
         
         with col1:
+            st.markdown(f"### {next_action['title']}")
+            st.markdown(f"**What:** {next_action['description']}")
+            st.markdown(f"**Why:** {next_action['why']}")
+            st.markdown(f"**Time:** {next_action['time']}")
+        
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)
             if next_action['link']:
                 st.link_button(f"✅ {next_action['title']}", next_action['link'], use_container_width=True)
             else:
-                st.info("⏳ Please wait for document approval")
+                st.info("⏳ Waiting for approval")
         
-        with col2:
-            if st.button("❓ Need Help", key="need_help", use_container_width=True):
-                # This will trigger LLM enhancement
-                st.session_state.show_help_input = True
-                st.rerun()
-        
-        # Motivational tip (LLM-generated)
-        if self.api_key:
-            tip = LLMEnhancement.generate_motivational_tip(profile, self.api_key)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.info(tip)
+        st.markdown("---")
         
         # Allow free-text questions
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 💬 Have Questions?")
+        st.markdown("### 💬 Have Questions About Your Learning Path?")
         
         user_question = st.text_input(
             "Ask me anything...",
             key="free_text_question",
-            placeholder="e.g., How long will KYC approval take?"
+            placeholder="e.g., Can I skip the demo account? or How much should I start with?"
         )
         
         if user_question:
