@@ -131,6 +131,19 @@ class ConversationPaths:
     """Define conversation paths based on user profile"""
     
     @staticmethod
+    def determine_path(profile):
+        """Determine which conversation path to follow"""
+        experience = profile.get('trading_experience', '').lower()
+        
+        if 'beginner' in experience:
+            return 'beginner'
+        elif 'knowledge' in experience:
+            return 'intermediate'
+        elif 'experienced' in experience:
+            return 'advanced'
+        return 'beginner'  # Default
+    
+    @staticmethod
     def get_learning_plan(profile):
         """Get comprehensive learning plan based on experience level"""
         path = ConversationPaths.determine_path(profile)
